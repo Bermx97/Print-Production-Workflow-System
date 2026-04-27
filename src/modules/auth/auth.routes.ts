@@ -1,9 +1,9 @@
 import express from 'express';
-const router = express.Router();
 import { login } from './auth.controller'
 import { body } from 'express-validator';
 import validateRequest from '../../middlewares/validateRequest';
 
+const router = express.Router();
 
 router.post('/login',
     body('login')
