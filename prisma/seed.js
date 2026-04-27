@@ -1,21 +1,14 @@
 require("dotenv").config();
 
 const { PrismaClient } = require("@prisma/client");
-const { PrismaPg } = require("@prisma/adapter-pg");
 const bcrypt = require("bcrypt");
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
-
-const prisma = new PrismaClient({
-  adapter,
-});
+const prisma = new PrismaClient();
 
 async function main() {
   const hashedPassword = await bcrypt.hash("admin123", 10);
 
-  await prisma.employees.create({
+  await prisma.employee.create({
     data: {
       login: "admin",
       hashed_password: hashedPassword,

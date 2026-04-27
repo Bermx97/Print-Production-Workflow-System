@@ -1,9 +1,7 @@
-import app from "./app";
 import express from "express";
+import app from './app'
+
 const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {

@@ -9,29 +9,30 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model orders {
-  id           String   @id @default(uuid())
-  order_number Int      @unique
+model order {
+  id           String       @id @default(uuid())
+  order_number Int          @unique
   status       order_status
   due_date     DateTime
 
-  assigned_to  String?
-  assignedTo   employees? @relation("AssignedOrders", fields: [assigned_to], references: [id])
+  assigned_to String?
+  assignedTo  employee? @relation("AssignedOrders", fields: [assigned_to], references: [id])
 
-  created_by   String
-  createdBy    employees  @relation("CreatedOrders", fields: [created_by], references: [id])
+  created_by String
+  createdBy  employee @relation("CreatedOrders", fields: [created_by], references: [id])
 }
 
-model employees {
-  id              String    @id @default(uuid())
-  login           String    @unique @db.VarChar(20)
+model employee {
+  id              String        @id @default(uuid())
+  login           String        @unique @db.VarChar(20)
   hashed_password String
   role            employee_role
 
-  assignedOrders  orders[]  @relation("AssignedOrders")
-  createdOrders   orders[]  @relation("CreatedOrders")
+  assignedOrders order[] @relation("AssignedOrders")
+  createdOrders  order[] @relation("CreatedOrders")
 }
 
 enum employee_role {
