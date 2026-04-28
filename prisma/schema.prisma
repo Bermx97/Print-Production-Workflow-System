@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,12 +12,10 @@ model order {
   order_number Int          @unique
   status       order_status
   due_date     DateTime
-
-  assigned_to String?
-  assignedTo  employee? @relation("AssignedOrders", fields: [assigned_to], references: [id])
-
-  created_by String
-  createdBy  employee @relation("CreatedOrders", fields: [created_by], references: [id])
+  assigned_to  String?
+  created_by   String
+  assignedTo   employee?    @relation("AssignedOrders", fields: [assigned_to], references: [id])
+  createdBy    employee     @relation("CreatedOrders", fields: [created_by], references: [id])
 }
 
 model employee {
@@ -30,9 +23,8 @@ model employee {
   login           String        @unique @db.VarChar(20)
   hashed_password String
   role            employee_role
-
-  assignedOrders order[] @relation("AssignedOrders")
-  createdOrders  order[] @relation("CreatedOrders")
+  assignedOrders  order[]       @relation("AssignedOrders")
+  createdOrders   order[]       @relation("CreatedOrders")
 }
 
 enum employee_role {
