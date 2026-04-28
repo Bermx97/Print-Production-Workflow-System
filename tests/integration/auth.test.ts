@@ -1,15 +1,51 @@
 import request from "supertest";
-import { app } from "../../src/app";
+import app from "../../src/app";
+import prisma from "../../src/lib/prisma";
 
-it("login works", async () => {
-        console.log(process.env.DATABASE_URL);
-  const res = await request(app)
-    .post("/auth/login")
+
+beforeEach(async () => {
+  await prisma.employee.deleteMany();
+});
+
+describe('POST auth/register', () => {
+  it('should return 400 if the login is empty', async () => {
+    const response = await request(app)
+      .post('/auth/register')
+      .send({
+        login:'',
+        password:'admin123',
+        role: 'admin'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Login is required');
+  });
+
+  it('should return 400 if the password is empty', async () => {
+  const response = await request(app)
+    .post('/auth/register')
     .send({
-      login: "admin",
-      password: "admin123"
+      login:'Admin1',
+      password:'',
+      role: 'admin'
     });
 
-  expect(res.status).toBe(200);
-  expect(res.body.token).toBeDefined();
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Password is required');
+  });
+
+  it('should return 400 if the role is empty', async () => {
+  const response = await request(app)
+    .post('/auth/register')
+    .send({
+      login:'Admin1',
+      password:'Adminpass',
+      role: ''
+    });
+
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Role is required');
+  });
 });
+
+

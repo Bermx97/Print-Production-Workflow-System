@@ -10,6 +10,7 @@
     "outDir": "dist",
     "types": ["jest", "node"],
     "typeRoots": ["./src/types", "./node_modules/@types"],
+    "isolatedModules": true
   },
   "exclude": [
     "node_modules",
