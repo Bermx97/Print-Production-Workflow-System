@@ -1,15 +1,20 @@
-import { Request, Response, NextFunction} from "express";
+import { Request, Response, NextFunction } from "express";
+import { HttpError } from "../utils/errors";
 
-const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
-    const customError = err as Error & { status?: number };
-    console.error(err.stack);
+const errorHandler = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  console.error(err.stack);
 
-    const status = customError.status || 500;
+  const status = err instanceof HttpError ? err.status : 500;
 
-    res.status(status).json({
-        success: false,
-        message: err.message || 'Internal Server Error'
-    });
+  res.status(status).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
 };
 
 export default errorHandler;
