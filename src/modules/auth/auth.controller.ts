@@ -52,14 +52,13 @@ type RegisterBody = {
 };
 
 export const registerEmployee = async (req: Request<{}, {}, RegisterBody>, res: Response) => {
-
-        console.log("BODY:", req.body);
-
   const { login, password, role } = req.body as RegisterBody;
   const employee = await findEmployee(login);
+
   if (employee) {
-    throw new HttpError('User already exist', 409);
+    throw new HttpError('Employee already exist', 409);
   }
+
   const hashedPassword = await bcrypt.hash(password, 10);
   const result = await createEmployee(login, hashedPassword, role);
   res.status(201).json({ message: `User ${result.login} with role ${result.role} created` });
