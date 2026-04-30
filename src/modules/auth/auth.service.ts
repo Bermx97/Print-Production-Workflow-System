@@ -1,5 +1,5 @@
-import prisma from "../../lib/prisma";
-import { employee_role } from "@prisma/client";
+import prisma from '../../lib/prisma';
+import { employee_role } from '@prisma/client';
 
 export const findEmployee = async (login: string) => {
     return await prisma.employee.findUnique({
@@ -12,7 +12,7 @@ export const createEmployee = async (login: string, hashedPassword:string, role:
         data: {
             login: login,
             hashed_password: hashedPassword,
-            role: role
+            role: role as employee_role
         }
     });
 };

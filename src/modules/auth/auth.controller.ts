@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt';
 import { Request, Response } from 'express';
 import { findEmployee, createEmployee } from './auth.service';
-import { HttpError } from "../../utils/errors";
-import { AuthUser } from "../../types/auth";
-import jwt from "jsonwebtoken";
-import { employee_role } from "@prisma/client";
+import { HttpError } from '../../utils/errors';
+import { AuthUser } from '../../types/auth';
+import jwt from 'jsonwebtoken';
+import { employee_role } from '@prisma/client';
 
 type LoginBody = {
   login: string;
@@ -26,15 +26,16 @@ export const login = async (req: Request<{}, {}, LoginBody>, res: Response) => {
     const secret = process.env.JWT_SECRET;
 
     if (!secret) {
-      throw new HttpError("Internal Server Error", 500);
+      throw new HttpError('Internal Server Error', 500);
     }
 
+
     const payload: AuthUser = {
-      userId: employee.id,
-      role: employee.role
+      id: employee.id,
+      role: employee.role as employee_role
     };
 
-    const token = jwt.sign(payload, secret, { expiresIn: "1h" });
+    const token = jwt.sign(payload, secret, { expiresIn: '1h' });
       return res.json({
         token,
         user: {
@@ -62,4 +63,5 @@ export const registerEmployee = async (req: Request<{}, {}, RegisterBody>, res: 
   const hashedPassword = await bcrypt.hash(password, 10);
   const result = await createEmployee(login, hashedPassword, role);
   res.status(201).json({ message: `User ${result.login} with role ${result.role} created` });
+ 
 }

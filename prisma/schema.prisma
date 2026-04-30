@@ -33,6 +33,7 @@ enum employee_role {
   gluer
   admin
   technologist
+  seller
 }
 
 enum order_status {

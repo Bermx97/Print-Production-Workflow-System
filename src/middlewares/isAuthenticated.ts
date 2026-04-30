@@ -1,23 +1,28 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from "jsonwebtoken";
+import { Request, Response, NextFunction } from "express";
 import { HttpError } from "../utils/errors";
-import type { AuthUser } from "../types/auth";
+import { verifyToken } from "../utils/decode.token";
 
 export const isAuthenticated = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.headers.authorization) {
-        throw new HttpError("Not authorized", 401);
-    } else {
-        if (req.headers.authorization.startsWith('Bearer ')) {
-            if (!process.env.JWT_SECRET) {
-                throw new HttpError("Internal Server Error", 500);
-            }
-            const secret = process.env.JWT_SECRET;
-            const token = req.headers.authorization.split(" ")[1];
-            const decoded = jwt.verify(token, secret);
-            req.user = decoded as AuthUser;
-            return next();
-        } else {
-            throw new HttpError('Unauthorized', 401);
-        }
-    }
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    throw new HttpError('Not authorized', 401);
+  }
+
+  if (!authHeader.startsWith('Bearer ')) {
+    throw new HttpError('Invalid token format', 401);
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = verifyToken(token);
+    
+
+    req.user = decoded;
+
+    return next();
+  } catch {
+    throw new HttpError('Invalid token', 401);
+  }
 };

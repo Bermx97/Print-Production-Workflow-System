@@ -1,4 +1,6 @@
+import { employee_role } from "@prisma/client";
+
 export type AuthUser = {
-  userId: string;
-  role: string;
+  id: string;
+  role: employee_role;
 };
