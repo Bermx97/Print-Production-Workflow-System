@@ -4,6 +4,7 @@ import { body } from 'express-validator';
 import validateRequest from '../../middlewares/validateRequest';
 import { employee_role } from "@prisma/client";
 
+
 const router = express.Router();
 
 router.post('/login',

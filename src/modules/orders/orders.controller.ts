@@ -1,10 +1,7 @@
 import { Request, Response } from 'express';
 import { createOrderService, getOrdersService, getOrderService } from './orders.service';
 import { HttpError } from '../../utils/errors';
-import { randomInt } from 'crypto';
-
-
-
+import prisma from '../../lib/prisma';
 
 export const getOrders = async (req: Request, res: Response) => {
     const orders = await getOrdersService();
@@ -21,29 +18,25 @@ export const getOrderByNumber = async (req: Request, res: Response) => {
   return res.status(200).json(order);
 };
 
+//stestuj
 export const createOrder = async (req: Request, res: Response) => {
-    const base = Date.now() % 1000000; const 
-    orderNumber: number = base * 1000 + randomInt(100, 999);
+  const { orderNumber, status, dueDate } = req.body;
 
-    const status = 'gluing'
+  const existing = await prisma.order.findUnique({
+    where: { order_number: orderNumber }
+  });
 
-    const dueDate = new Date();  dueDate.setDate(dueDate.getDate() + 14); //to we froncie będziemy wrzucać
+  if (existing) {
+    throw new HttpError(`Order ${orderNumber} already exists`, 409);
+  }
 
-    const assignedTo = '28d46871-3645-44e9-abed-deaa5ef80d35'  //to najprawdopodobniej wyrzucimy żeby wyświetlać tylko na komputerach działowych
-    const createBy = req.user.id 
+  const data = {
+    order_number: Number(orderNumber),
+    status,
+    due_date: new Date(dueDate),
+    createdBy: { connect: { id: req.user.id } }
+  }
 
-    const result = await createOrderService({
-        order_number: orderNumber,
-        status: status,
-        due_date: dueDate,
-        assignedTo: assignedTo
-      ? {
-          connect: { id: assignedTo }
-        }
-      : undefined,
-        createdBy: {
-        connect: { id: createBy }
-}
-    })
-      res.status(201).json({ message: `Order created` });
-}
+  const result = await createOrderService(data);
+  res.status(201).json({ message: `Order ${orderNumber} created`, order: result });
+};

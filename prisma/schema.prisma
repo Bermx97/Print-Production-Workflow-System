@@ -12,9 +12,7 @@ model order {
   order_number Int          @unique
   status       order_status
   due_date     DateTime
-  assigned_to  String?
   created_by   String
-  assignedTo   employee?    @relation("AssignedOrders", fields: [assigned_to], references: [id])
   createdBy    employee     @relation("CreatedOrders", fields: [created_by], references: [id])
 }
 
@@ -23,7 +21,6 @@ model employee {
   login           String        @unique @db.VarChar(20)
   hashed_password String
   role            employee_role
-  assignedOrders  order[]       @relation("AssignedOrders")
   createdOrders   order[]       @relation("CreatedOrders")
 }
 
