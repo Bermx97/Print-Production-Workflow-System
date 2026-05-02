@@ -8,3 +8,9 @@ export const roleStatusMap: Record<employee_role, order_status[]> = {
     technologist: Object.values(order_status),
     seller: Object.values(order_status)
 };
+
+export const nextStatusMap = {
+    [order_status.printing]: order_status.cutting,
+    [order_status.cutting]: order_status.gluing,
+    [order_status.gluing]: order_status.done
+} as const;

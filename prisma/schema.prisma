@@ -37,4 +37,5 @@ enum order_status {
   printing
   cutting
   gluing
+  done
 }

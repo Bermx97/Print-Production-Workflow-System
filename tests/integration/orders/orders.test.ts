@@ -3,7 +3,7 @@ import app from '../../../src/app';
 import prisma from '../../../src/lib/prisma';
 import { getAuthToken } from '../../utils/auth';
 import { order_status } from '@prisma/client';
-import  { roleStatusMap }  from '../../../src/utils/roleStatusMap';
+import  { roleStatusMap }  from '../../../src/modules/orders/orders.workflow';
 
 let token: string;
 
@@ -132,7 +132,6 @@ describe('POST /orders', () => {
         .post('/orders')
         .send({
           orderNumber: '',
-          status: order_status.printing,
           dueDate: new Date('2026-08-01'),
           createdBy: ''
         });
@@ -141,26 +140,11 @@ describe('POST /orders', () => {
         expect(response.body.message).toBe('orderNumber must be a number');
     });
 
-  it('should return 400 if the status is wrong', async () => {
-      const response = await request(app)
-      .post('/orders')
-      .send({
-        orderNumber: 14452,
-        status: 'wrongStatus',
-        dueDate: new Date('2026-08-01'),
-        createdBy: ''
-      });
-
-      expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Invalid status');
-  });
-
   it('should return 400 if the date is not a date', async () => {
     const response = await request(app)
     .post('/orders')
     .send({
       orderNumber: 14452,
-      status: order_status.printing,
       dueDate: '20',
       createdBy: ''
     });
@@ -174,7 +158,6 @@ describe('POST /orders', () => {
     .post('/orders')
     .send({
       orderNumber: 14452,
-      status: order_status.printing,
       dueDate: '2026-08-01',
       createdBy: ''
     });
@@ -187,7 +170,7 @@ describe('POST /orders', () => {
     const auth = await getAuthToken();
     token = auth.token;
     const orderNumber = Number(Math.floor(Math.random() * 10000));
-    const data = { orderNumber, status: order_status.printing, dueDate: new Date('2026-08-01') };
+    const data = { orderNumber, dueDate: new Date('2026-08-01') };
 
     await request(app)
     .post('/orders')
@@ -207,7 +190,7 @@ describe('POST /orders', () => {
     const auth = await getAuthToken();
     token = auth.token;
     const orderNumber = Number(Math.floor(Math.random() * 10000));
-    const data = {orderNumber, status: order_status.printing, dueDate: new Date("2026-08-01") }
+    const data = {orderNumber, dueDate: new Date("2026-08-01") }
 
     const response = await request(app)
     .post('/orders')
@@ -217,7 +200,6 @@ describe('POST /orders', () => {
     expect(response.body).toMatchObject({
       message: `Order ${orderNumber} created`, order: {
         order_number: data.orderNumber,
-        status: data.status,
         created_by: auth.user.id
       }
     });

@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
-import { createOrderService, getOrdersService, getOrderService, getMyOrdersService } from './orders.service';
+import { createOrderService, getOrdersService, getOrderService, getMyOrdersService, updateOrderStatusService } from './orders.service';
 import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
-import  { roleStatusMap }  from '../../utils/roleStatusMap';
+import  { roleStatusMap }  from '../orders/orders.workflow';
 import { Prisma } from '@prisma/client';
+import { order_status } from '@prisma/client';
 
 export const getOrders = async (req: Request, res: Response) => {
   const orders = await getOrdersService();
@@ -25,21 +26,16 @@ export const getMyOrders = async (req: Request, res: Response) => {
   return res.status(200).json(orders);
 };
 
-
 export const getOrderByNumber = async (req: Request, res: Response) => {
   const { orderNumber } = req.params;
   const order = await getOrderService(Number(orderNumber));
-
-  if (!order) {
-    throw new HttpError('Order not found', 404);
-  };
 
   return res.status(200).json(order);
 };
 
 export const createOrder = async (req: Request, res: Response) => {
-  const { orderNumber, status, dueDate } = req.body;
-
+  const { orderNumber, dueDate } = req.body;
+  const status = order_status.printing;
   const existing = await prisma.order.findUnique({
     where: { order_number: orderNumber }
   });
@@ -58,3 +54,11 @@ export const createOrder = async (req: Request, res: Response) => {
   const result = await createOrderService(data);
   res.status(201).json({ message: `Order ${orderNumber} created`, order: result });
 };
+
+export const updateOrderStatus = async (req: Request, res: Response) => {
+  const { orderNumber } = req.params;
+  const userRole = req.user.role
+  const result = await updateOrderStatusService(Number(orderNumber), userRole);
+
+  return res.status(200).json(result);
+}

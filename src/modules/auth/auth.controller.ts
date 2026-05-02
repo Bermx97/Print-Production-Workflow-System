@@ -29,7 +29,6 @@ export const login = async (req: Request<{}, {}, LoginBody>, res: Response) => {
       throw new HttpError('Internal Server Error', 500);
     }
 
-
     const payload: AuthUser = {
       id: employee.id,
       role: employee.role as employee_role

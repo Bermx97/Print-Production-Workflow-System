@@ -17,7 +17,7 @@ it('should create order and find it', async () => {
     const auth = await getAuthToken();
     token = auth.token;
     const orderNumber = Number(Math.floor(Math.random() * 10000));
-    const data = { orderNumber, status: order_status.printing, dueDate: new Date('2026-08-01') };
+    const data = { orderNumber, dueDate: new Date('2026-08-01') };
 
     const createOrder = await request(app)
     .post('/orders')
@@ -28,7 +28,6 @@ it('should create order and find it', async () => {
     expect(createOrder.body).toMatchObject({
       message: `Order ${orderNumber} created`, order: {
         order_number: data.orderNumber,
-        status: data.status,
         created_by: auth.user.id
       }
     });
@@ -40,7 +39,6 @@ it('should create order and find it', async () => {
     expect(findOrder.status).toBe(200);
     expect(findOrder.body).toMatchObject({
       order_number: orderNumber,
-      status: data.status,
       created_by: auth.user.id
     });
 });
