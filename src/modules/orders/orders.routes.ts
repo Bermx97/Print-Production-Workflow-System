@@ -1,6 +1,6 @@
 import express from 'express';
 import { isAuthenticated } from '../../middlewares/isAuthenticated';
-import { createOrder, getOrders, getOrderByNumber } from './orders.controller';
+import { createOrder, getOrders, getOrderByNumber, getMyOrders } from './orders.controller';
 import validateRequest from '../../middlewares/validateRequest';
 import { body } from 'express-validator';
 import { authorizeRoles } from '../../middlewares/authorizeRole';
@@ -25,6 +25,8 @@ router.post('/',
     validateRequest, isAuthenticated, canCreateOrder, createOrder);
 
 router.get('/', isAuthenticated, getOrders);
+router.get('/my', isAuthenticated, getMyOrders );
 router.get('/:orderNumber',isAuthenticated, getOrderByNumber);
+
 
 export default router;

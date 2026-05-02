@@ -3,16 +3,66 @@ import app from '../../../src/app';
 import prisma from '../../../src/lib/prisma';
 import { getAuthToken } from '../../utils/auth';
 import { order_status } from '@prisma/client';
-
+import  { roleStatusMap }  from '../../../src/utils/roleStatusMap';
 
 let token: string;
-
 
 beforeEach(async () => {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE "order", "employee" RESTART IDENTITY CASCADE;
   `);
 });
+
+describe('GET /orders/my', () => {
+  it('should return only allowed orders', async () => {
+    const auth = await getAuthToken('gluer');
+    token = auth.token;
+    await prisma.order.createMany({
+      data: [
+        {
+          order_number: 1,
+          status: 'printing',
+          due_date: new Date('2026-08-01'),
+          created_by: auth.user.id,
+        },
+        {
+          order_number: 2,
+          status: 'cutting',
+          due_date: new Date('2026-08-01'),
+          created_by: auth.user.id,
+        },
+        {
+          order_number: 3,
+          status: 'gluing',
+          due_date: new Date('2026-08-01'),
+          created_by: auth.user.id,
+        },
+        {
+          order_number: 4,
+          status: 'gluing',
+          due_date: new Date('2026-08-01'),
+          created_by: auth.user.id,
+        },
+      ],
+    });
+    const response = await request(app)
+        .get('/orders/my')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).toBe(200);
+
+      const returnedStatuses = response.body.map(
+        (o: any) => o.status
+      );
+
+      const allowedStatuses = roleStatusMap[auth.user.role];
+
+      expect(returnedStatuses.every((s: string) =>
+        allowedStatuses.includes(s as any)
+      )).toBe(true);
+    });
+  });
+
 
 describe('GET /orders', () => {
   it('should return 200 if orders exist', async () => {
@@ -35,7 +85,6 @@ describe('GET /orders', () => {
 });
 
 describe('GET /orders/:orderNumber', () => {
-
   it('should return 404 if order not found', async () => {
     const auth = await getAuthToken();
     token = auth.token
