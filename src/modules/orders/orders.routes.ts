@@ -25,6 +25,6 @@ router.post('/',
     validateRequest, isAuthenticated, canCreateOrder, createOrder);
 
 router.get('/', isAuthenticated, getOrders);
-router.get('/:orderNumber', getOrderByNumber);
+router.get('/:orderNumber',isAuthenticated, getOrderByNumber);
 
 export default router;

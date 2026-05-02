@@ -2,8 +2,10 @@ import request from 'supertest';
 import  app from '../../src/app';
 
 export const getAuthToken = async () => {
+  const uniqueLogin = `user_${Date.now()}`;
+
   const user = {
-    login: 'testUser',
+    login: uniqueLogin,
     password: 'test123',
     role: 'admin'
   };
@@ -20,3 +22,4 @@ export const getAuthToken = async () => {
     user: res.body.user
   };
 };
+

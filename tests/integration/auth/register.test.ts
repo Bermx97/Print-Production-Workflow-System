@@ -4,7 +4,9 @@ import prisma from "../../../src/lib/prisma";
 
 
 beforeEach(async () => {
-  await prisma.employee.deleteMany();
+  await prisma.$executeRawUnsafe(`
+    TRUNCATE TABLE "order", "employee" RESTART IDENTITY CASCADE;
+  `);
 
   await prisma.employee.create({
     data : {
