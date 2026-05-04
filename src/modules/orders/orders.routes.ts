@@ -24,6 +24,6 @@ router.post('/',
     .withMessage('dueDate must be a valid date'),
     validateRequest, isAuthenticated, canCreateOrder, createOrder);
 
-router.post('/:orderNumber/nextStatus', isAuthenticated, updateOrderStatus)
+router.post('/:orderNumber/nextStatus', isAuthenticated, updateOrderStatus);
 
 export default router;

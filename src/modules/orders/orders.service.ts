@@ -3,10 +3,11 @@ import { Prisma } from '@prisma/client';
 type CreateOrderData = Prisma.orderCreateInput;
 import { HttpError } from '../../utils/errors';
 import { order_status, employee_role } from '@prisma/client';
-import { nextStatusMap, roleStatusMap } from './orders.workflow';
+import { roleStatusMap, workflow } from './orders.workflow';
 
 
 export const getOrdersService = async () => {
+    
     return await prisma.order.findMany({
         orderBy: { due_date: 'asc' }
     });
@@ -31,28 +32,60 @@ export const getOrderService = async (orderNumber: number) => {
 };
 
 export const createOrderService = async (data: CreateOrderData) => {
-    return await prisma.order.create({
-        data
-    });
+    return await prisma.order.create({ data });
 };
+
+
 
 export const updateOrderStatusService = async (orderNumber: number, userRole: employee_role) => {
     const order = await getOrderService(orderNumber);
-    
-    const allowedStatuses = roleStatusMap[userRole];
+    const access = roleStatusMap[userRole];
 
-    if (!allowedStatuses.includes(order.status)) {
-        throw new HttpError('You do not have permission to perform this action', 403);
+    if (!access) {
+        throw new HttpError('Role has no assigned step', 403);
     }
-    
-    const nextStatus = nextStatusMap[order.status as keyof typeof nextStatusMap];
 
-    if (!nextStatus) {
-        throw new HttpError('No further status transition available', 409);
+    let step: order_status;
+
+    if (access.type === "STEP") {
+    step = access.step;
+    } else {
+    const availableSteps = (Object.keys(workflow) as order_status[]).filter(s =>
+        !order.completed_steps.includes(s) &&
+        workflow[s].every(dep =>
+        order.completed_steps.includes(dep)
+        )
+    );
+
+    if (availableSteps.length === 0) {
+        throw new HttpError('No available steps', 409);
     }
+
+    step = availableSteps[0];
+    }
+
+    const dependencies = workflow[step] || [];
+
+    const canExecute = dependencies.every(dep =>
+        order.completed_steps.includes(dep)
+    );
+
+    if (!canExecute) {
+        throw new HttpError('Step is blocked by dependencies', 409);
+    }
+
+    if (order.completed_steps.includes(step)) {
+        throw new HttpError('Step already completed', 409);
+    }
+
+    
 
     return await prisma.order.update({
         where: { order_number: orderNumber },
-        data: { status: nextStatus }
+        data: {
+        completed_steps: {
+            push: step
+        }
+        }
     });
 };

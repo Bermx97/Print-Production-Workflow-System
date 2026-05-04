@@ -3,8 +3,9 @@ import { createOrderService, getOrdersService, getOrderService, getMyOrdersServi
 import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
 import  { roleStatusMap }  from '../orders/orders.workflow';
-import { Prisma } from '@prisma/client';
+import { Prisma, order } from '@prisma/client';
 import { order_status } from '@prisma/client';
+import { canWorkOnOrder } from './order.access.service';
 
 export const getOrders = async (req: Request, res: Response) => {
   const orders = await getOrdersService();
@@ -12,18 +13,16 @@ export const getOrders = async (req: Request, res: Response) => {
 };
 
 export const getMyOrders = async (req: Request, res: Response) => {
-  const { status } = req.query;
   const userRole = req.user.role;
-  const allowedStatuses = roleStatusMap[userRole];
+  const access = roleStatusMap[userRole];
 
-  const where: Prisma.orderWhereInput  = {
-  status: {
-    in: allowedStatuses,
-  },
-};
+  const orders: order[] = await prisma.order.findMany();
 
-  const orders = await getMyOrdersService(where);
-  return res.status(200).json(orders);
+  const myOrders = orders.filter(order =>
+    canWorkOnOrder(order, access)
+  );
+
+  return res.status(200).json(myOrders);
 };
 
 export const getOrderByNumber = async (req: Request, res: Response) => {
@@ -54,7 +53,7 @@ export const createOrder = async (req: Request, res: Response) => {
   const result = await createOrderService(data);
   res.status(201).json({ message: `Order ${orderNumber} created`, order: result });
 };
-
+//stestuj
 export const updateOrderStatus = async (req: Request, res: Response) => {
   const { orderNumber } = req.params;
   const userRole = req.user.role

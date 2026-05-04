@@ -1,16 +1,30 @@
 import { order_status, employee_role } from '@prisma/client';
 
-export const roleStatusMap: Record<employee_role, order_status[]> = {
-    printer: [order_status.printing],
-    cutter: [order_status.cutting],
-    gluer: [order_status.gluing],
-    admin: Object.values(order_status),
-    technologist: Object.values(order_status),
-    seller: Object.values(order_status)
+
+export type RoleAccess =
+  | { type: "STEP"; step: order_status }
+  | { type: "ALL" };
+
+
+  export const roleStatusMap: Record<employee_role, RoleAccess> = {
+  printer: { type: "STEP", step: "printing" },
+  cutter: { type: "STEP", step: "cutting" },
+  gluer: { type: "STEP", step: "gluing" },
+
+  seller: { type: 'ALL'},
+
+  technologist: { type: "ALL" },
+  admin: { type: "ALL" }
 };
 
-export const nextStatusMap = {
-    [order_status.printing]: order_status.cutting,
-    [order_status.cutting]: order_status.gluing,
-    [order_status.gluing]: order_status.done
-} as const;
+export const workflow: Record<order_status, order_status[]> = {
+  [order_status.printing]: [],
+  [order_status.cutting]: [order_status.printing],
+  [order_status.gluing]: [order_status.printing],
+  done: []
+};
+
+
+
+
+
