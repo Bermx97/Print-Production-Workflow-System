@@ -1,5 +1,16 @@
 # Order Management API
 
+## Status
+Project in progress (WIP)
+
+Core logic works partially, some edge cases and improvements pending.
+
+Known limitations:
+- workflow edge cases not fully tested
+- role system may still be adjusted
+
+ Some parts of workflow logic are experimental
+
 A backend REST API for managing production orders with role-based access control and a structured workflow system.
 
 The system is designed for production environments (e.g. printing pipelines), where orders move through predefined stages and only specific roles can advance them.
