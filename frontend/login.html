@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+</head>
+<body>
+
+  <h1>Login</h1>
+
+  <input id="login" placeholder="Login" /><br /><br />
+  <input id="password" type="password" placeholder="Password" /><br /><br />
+
+
+  <button onclick="login()">Zaloguj</button>
+
+  <p id="error" style="color:red;"></p>
+
+  <script>
+    async function login() {
+      const login = document.getElementById("login").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ login, password })
+      });
+
+      if (!res.ok) {
+        document.getElementById("error").innerText = "Błędny login lub hasło";
+        return;
+      }
+
+      const data = await res.json();
+
+      
+
+      localStorage.setItem("token", data.token);
+
+      window.location.href = "/index.html";
+    }
+  </script>
+
+</body>
+</html>

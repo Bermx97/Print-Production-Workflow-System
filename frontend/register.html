@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Rejestracja</title>
+</head>
+<body>
+
+  <h2>Rejestracja</h2>
+
+  <form id="registerForm">
+    <label>Login:</label><br>
+    <input type="text" id="login" required><br><br>
+
+```
+<label>Hasło:</label><br>
+<input type="password" id="password" required><br><br>
+
+<label>Rola:</label><br>
+<select id="role">
+  <option value="printer_operator">Printer Operator</option>
+  <option value="folding_operator">Folding Operator</option>
+  <option value="sewing_operator">Sewing Operator</option>
+  <option value="case_maker">Case Maker</option>
+  <option value="hardcover_binder_operator">Hardcover Binder</option>
+  <option value="perfect_bound_operator">Perfect Bound Operator</option>
+  <option value="stitching_operator">Stitching Operator</option>
+  <option value="seller">Seller</option>
+  <option value="technologist">Technologist</option>
+  <option value="admin">Admin</option>
+</select><br><br>
+
+<button type="submit">Zarejestruj</button>
+```
+
+  </form>
+
+  <p id="message"></p>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const login = document.getElementById('login').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+
+      try {
+        const res = await fetch('http://localhost:3000/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ login, password, role })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          message.innerText = data.message || 'Błąd rejestracji';
+          return;
+        }
+
+        message.innerText = 'Rejestracja zakończona sukcesem!';
+      } catch (err) {
+        message.innerText = 'Błąd połączenia z serwerem';
+      }
+    });
+  </script>
+
+</body>
+</html>

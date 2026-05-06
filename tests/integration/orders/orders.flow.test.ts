@@ -2,7 +2,7 @@ import request from "supertest";
 import app from "../../../src/app";
 import prisma from "../../../src/lib/prisma";
 import { getAuthToken } from '../../utils/auth';
-import { order_status } from '@prisma/client';
+
 
 let token: string;
 
@@ -17,7 +17,7 @@ it('should create order and find it', async () => {
     const auth = await getAuthToken();
     token = auth.token;
     const orderNumber = Number(Math.floor(Math.random() * 10000));
-    const data = { orderNumber, dueDate: new Date('2026-08-01') };
+    const data = { orderNumber, dueDate: new Date('2026-08-01'), productType: 'hardcover_book' };
 
     const createOrder = await request(app)
     .post('/orders')

@@ -22,6 +22,7 @@ router.post('/login',
     validateRequest, login);
 
 router.post('/register',
+    
     body('login')
     .notEmpty()
     .withMessage('Login is required')

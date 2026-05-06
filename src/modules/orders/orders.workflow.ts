@@ -1,28 +1,56 @@
-import { order_status, employee_role } from '@prisma/client';
+import { employee_role } from '@prisma/client';
+import { OrderStatus, ORDER_STATUSES, ProductType } from '../../types/orderStatus';
+
 
 
 export type RoleAccess =
-  | { type: "STEP"; step: order_status }
-  | { type: "ALL" };
+  | { type: "ALL" }
+  | { type: "LIMITED"; steps: OrderStatus[] };
 
 
-  export const roleStatusMap: Record<employee_role, RoleAccess> = {
-  printer: { type: "STEP", step: "printing" },
-  cutter: { type: "STEP", step: "cutting" },
-  gluer: { type: "STEP", step: "gluing" },
 
-  seller: { type: 'ALL'},
+export const workflow: Record< ProductType, Partial<Record<OrderStatus, OrderStatus[]>>> = {
 
-  technologist: { type: "ALL" },
-  admin: { type: "ALL" }
+  hardcover_book: {
+    printing: [],
+    folding: ['printing'],
+    sewing: ['folding'],
+    case_making: ['folding'],
+    hardcover_binding: ['sewing', 'case_making']
+  },
+
+  perfect_bound_book: {
+    printing: [],
+    folding_with_milling: ['printing'],
+    binding: ['folding_with_milling']
+  },
+
+  saddle_stitching: {
+    printing: [],
+    folding: ['printing'],
+    stitching: ['folding']
+  }
 };
 
-export const workflow: Record<order_status, order_status[]> = {
-  [order_status.printing]: [],
-  [order_status.cutting]: [order_status.printing],
-  [order_status.gluing]: [order_status.printing],
-  done: []
+export const roleStatusMap: Record<employee_role, RoleAccess> = {
+  printer_operator: { type: 'LIMITED', steps: ['printing'] },
+  folding_operator: { type: 'LIMITED', steps: ['folding_with_milling', 'folding'] },
+  sewing_operator: { type: 'LIMITED', steps: ['sewing'] },
+  case_maker: { type:'LIMITED', steps: ['case_making'] },
+  hardcover_binder_operator: { type:'LIMITED', steps: ['hardcover_binding'] },
+  perfect_bound_operator: { type:'LIMITED', steps: ['binding'] },
+  stitching_operator: {type: 'LIMITED', steps: ['stitching'] },
+
+
+  seller: { type: 'ALL' },
+  technologist: { type: 'ALL' },
+  admin: { type: 'ALL' }
 };
+
+
+
+
+
 
 
 

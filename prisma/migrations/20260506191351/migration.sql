@@ -1,30 +1,17 @@
-/*
-  Warnings:
+-- CreateEnum
+CREATE TYPE "employee_role" AS ENUM ('printer_operator', 'folding_operator', 'sewing_operator', 'case_maker', 'hardcover_binder_operator', 'perfect_bound_operator', 'stitching_operator', 'seller', 'technologist', 'admin');
 
-  - You are about to drop the `employees` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `orders` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "orders" DROP CONSTRAINT "orders_assigned_to_fkey";
-
--- DropForeignKey
-ALTER TABLE "orders" DROP CONSTRAINT "orders_created_by_fkey";
-
--- DropTable
-DROP TABLE "employees";
-
--- DropTable
-DROP TABLE "orders";
+-- CreateEnum
+CREATE TYPE "product_type" AS ENUM ('hardcover_book', 'perfect_bound_book', 'saddle_stitching');
 
 -- CreateTable
 CREATE TABLE "order" (
     "id" TEXT NOT NULL,
     "order_number" INTEGER NOT NULL,
-    "status" "order_status" NOT NULL,
+    "completed_steps" TEXT[],
     "due_date" TIMESTAMP(3) NOT NULL,
-    "assigned_to" TEXT,
     "created_by" TEXT NOT NULL,
+    "product_type" "product_type" NOT NULL,
 
     CONSTRAINT "order_pkey" PRIMARY KEY ("id")
 );
@@ -44,9 +31,6 @@ CREATE UNIQUE INDEX "order_order_number_key" ON "order"("order_number");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "employee_login_key" ON "employee"("login");
-
--- AddForeignKey
-ALTER TABLE "order" ADD CONSTRAINT "order_assigned_to_fkey" FOREIGN KEY ("assigned_to") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "order" ADD CONSTRAINT "order_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

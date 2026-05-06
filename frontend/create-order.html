@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Order</title>
+</head>
+<body>
+
+  <h2>Create Order</h2>
+
+  <form id="orderForm">
+    <input type="number" id="orderNumber" placeholder="Order number" required />
+    <br><br>
+
+    <input type="date" id="dueDate" required />
+    <br><br>
+
+    <select id="productType" required>
+      <option value="">Select product</option>
+      <option value="hardcover_book">Hardcover book</option>
+      <option value="perfect_bound_book">Perfect bound book</option>
+      <option value="saddle_stitching">Saddle stitching</option>
+    </select>
+
+    <br><br>
+
+    <button type="submit">Create order</button>
+  </form>
+
+  <p id="status"></p>
+
+  <script>
+    const form = document.getElementById("orderForm");
+    const status = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const orderNumber = document.getElementById("orderNumber").value;
+      const dueDate = document.getElementById("dueDate").value;
+      const productType = document.getElementById("productType").value;
+
+      try {
+        const res = await fetch("http://localhost:3000/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // jeśli masz auth:
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify({
+            orderNumber,
+            dueDate,
+            productType
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Error");
+        }
+
+        status.innerText = "Order created successfully";
+        form.reset();
+
+      } catch (err) {
+        status.innerText = "Error: " + err.message;
+      }
+    });
+  </script>
+
+</body>
+</html>

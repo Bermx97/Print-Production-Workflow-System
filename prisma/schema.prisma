@@ -10,10 +10,11 @@ datasource db {
 model order {
   id           String       @id @default(uuid())
   order_number Int          @unique
-  status       order_status
+  completed_steps String[]
   due_date     DateTime
   created_by   String
   createdBy    employee     @relation("CreatedOrders", fields: [created_by], references: [id])
+  product_type product_type
 }
 
 model employee {
@@ -25,17 +26,23 @@ model employee {
 }
 
 enum employee_role {
-  printer
-  cutter
-  gluer
-  admin
-  technologist
+  printer_operator
+  folding_operator
+  sewing_operator
+  case_maker
+  hardcover_binder_operator
+  perfect_bound_operator
+  stitching_operator
+
+
   seller
+
+  technologist
+  admin
 }
 
-enum order_status {
-  printing
-  cutting
-  gluing
-  done
+enum product_type {
+  hardcover_book
+  perfect_bound_book
+  saddle_stitching
 }
