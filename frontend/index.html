@@ -3,78 +3,177 @@
 <head>
   <meta charset="UTF-8" />
   <title>My Orders</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background:#000000;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    h1 {
+      color: #ff2a2a;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    .top-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #ff2a2a;
+      border: none;
+      padding: 10px 14px;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #c90000;
+    }
+
+    .secondary {
+      background: #1f1f1f;
+      border: 1px solid #333;
+    }
+
+    .secondary:hover {
+      border-color: #ff2a2a;
+    }
+
+    #orders {
+      margin-top: 20px;
+    }
+
+    .order-card {
+      background: #141414;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-left: 4px solid #ff2a2a;
+      box-shadow: 0 0 10px rgba(255, 42, 42, 0.1);
+    }
+
+    .order-title {
+      color: #ff2a2a;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .steps {
+      color: #ccc;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h1>My Orders</h1>
+<div class="container">
 
-  <button onclick="loadOrders()">Odśwież</button>
-  <button onclick="logout()">Logout</button>
+  <h1>MY ORDERS</h1>
+
+  <div class="top-bar">
+
+    <button id="allOrdersBtn">All Orders</button>
+
+    <button class="secondary" onclick="loadOrders()">Refresh</button>
+
+    <button class="secondary" onclick="logout()">Logout</button>
+
+    <a href="create-order.html">
+      <button>Create Order</button>
+    </a>
+
+  </div>
 
   <div id="orders"></div>
-    <a href="create-order.html">
-    <button>Create order</button>
-  </a>
 
-  <script>
+</div>
 
-    
-    const token = localStorage.getItem("token");
+<script>
+  const token = localStorage.getItem("token");
 
-    if (!token) {
-      window.location.href = "/login.html";
-    }
+  if (!token) {
+    window.location.href = "/login.html";
+  }
 
-    async function loadOrders() {
-      const res = await fetch("/orders/my", {
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
+  document
+    .getElementById("allOrdersBtn")
+    .addEventListener("click", () => {
+      window.location.href = "/all-orders.html";
+    });
 
-      const orders = await res.json();
+  async function loadOrders() {
+    const res = await fetch("/orders/my", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
-      const container = document.getElementById("orders");
-      container.innerHTML = "";
+    const orders = await res.json();
 
-      orders.forEach(order => {
-        const div = document.createElement("div");
+    const container = document.getElementById("orders");
+    container.innerHTML = "";
 
-        div.style.border = "1px solid black";
-        div.style.padding = "10px";
-        div.style.margin = "10px";
+    orders.forEach(order => {
+      const div = document.createElement("div");
+      div.className = "order-card";
 
-        div.innerHTML = `
-          <p><b>Order:</b> ${order.order_number}</p>
-          <p><b>Steps:</b> ${order.completed_steps.join(", ")}</p>
-          <button onclick="completeOrder(${order.order_number})">
-            Skończ krok
-          </button>
-        `;
+      div.innerHTML = `
+        <div class="order-title">
+          Order #${order.order_number}
+        </div>
 
-        container.appendChild(div);
-      });
-    }
+        <div class="steps">
+          Steps: ${order.completed_steps.length
+            ? order.completed_steps.join(", ")
+            : "none"}
+        </div>
 
-    async function completeOrder(orderNumber) {
-      await fetch(`/orders/${orderNumber}/nextStep`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
+        <button onclick="completeOrder(${order.order_number})">
+          Complete step
+        </button>
+      `;
 
-      loadOrders();
-    }
+      container.appendChild(div);
+    });
+  }
 
-    function logout() {
-      localStorage.removeItem("token");
-      window.location.href = "/login.html";
-    }
+  async function completeOrder(orderNumber) {
+    await fetch(`/orders/${orderNumber}/nextStep`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
 
     loadOrders();
-  </script>
+  }
+
+  function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "/login.html";
+  }
+
+  loadOrders();
+</script>
 
 </body>
 </html>

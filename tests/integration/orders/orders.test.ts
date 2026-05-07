@@ -13,56 +13,42 @@ beforeEach(async () => {
   `);
 });
 
-
-/*
 describe('GET /orders/my', () => {
-  it('should return only allowed orders', async () => {
-    const auth = await getAuthToken('gluer');
+  it('should return only executable orders for role', async () => {
+    const auth = await getAuthToken('folding_operator');
+
     token = auth.token;
+
     await prisma.order.createMany({
       data: [
         {
           order_number: 1,
           due_date: new Date('2026-08-01'),
           created_by: auth.user.id,
+          product_type: 'hardcover_book',
+          completed_steps: []
         },
         {
           order_number: 2,
           due_date: new Date('2026-08-01'),
           created_by: auth.user.id,
-        },
-        {
-          order_number: 3,
-          due_date: new Date('2026-08-01'),
-          created_by: auth.user.id,
-        },
-        {
-          order_number: 4,
-          due_date: new Date('2026-08-01'),
-          created_by: auth.user.id,
-        },
-      ],
+          product_type: 'hardcover_book',
+          completed_steps: ['printing']
+        }
+      ]
     });
 
-    
     const response = await request(app)
-        .get('/orders/my')
-        .set('Authorization', `Bearer ${token}`);
+      .get('/orders/my')
+      .set('Authorization', `Bearer ${token}`);
 
-      expect(response.status).toBe(200);
+    expect(response.status).toBe(200);
 
-      const returnedStatuses = response.body.map(
-        (o: any) => o.status
-      );
+    expect(response.body).toHaveLength(1);
 
-      const allowedStatuses = roleStatusMap[auth.user.role];
-
-      expect(returnedStatuses.every((s: string) =>
-        allowedStatuses.includes(s as any)
-      )).toBe(true);
-    });
-  }); */
-
+    expect(response.body[0].order_number).toBe(2);
+  });
+});
 
 describe('GET /orders', () => {
   it('should return 200 if orders exist', async () => {
@@ -125,7 +111,6 @@ describe('GET /orders/:orderNumber', () => {
 });
 
 describe('POST /orders', () => {
-
   it('should return 400 if the orderNumber is empty', async () => {
         const response = await request(app)
         .post('/orders')

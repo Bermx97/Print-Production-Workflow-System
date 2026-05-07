@@ -3,72 +3,171 @@
 <head>
   <meta charset="UTF-8" />
   <title>Create Order</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0b;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #ff2a2a;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: #aaa;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      background: #141414;
+      padding: 25px;
+      border-radius: 12px;
+      border-left: 4px solid #ff2a2a;
+      box-shadow: 0 0 15px rgba(255, 42, 42, 0.1);
+    }
+
+    label {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #2a2a2a;
+      background: #1f1f1f;
+      color: white;
+      outline: none;
+      margin-bottom: 15px;
+    }
+
+    input:focus, select:focus {
+      border-color: #ff2a2a;
+    }
+
+    .full {
+      grid-column: span 2;
+    }
+
+    button {
+      background: #ff2a2a;
+      border: none;
+      padding: 12px;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #c90000;
+    }
+
+    #status {
+      margin-top: 15px;
+      color: #ccc;
+      text-align: center;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h2>Create Order</h2>
+<div class="container">
 
-  <form id="orderForm">
-    <input type="number" id="orderNumber" placeholder="Order number" required />
-    <br><br>
+  <h1>Create Order</h1>
+  <div class="subtitle">Add a new production order to the system</div>
 
-    <input type="date" id="dueDate" required />
-    <br><br>
+  <form id="orderForm" class="grid">
 
-    <select id="productType" required>
-      <option value="">Select product</option>
-      <option value="hardcover_book">Hardcover book</option>
-      <option value="perfect_bound_book">Perfect bound book</option>
-      <option value="saddle_stitching">Saddle stitching</option>
-    </select>
+    <div>
+      <label>Order number</label>
+      <input type="number" id="orderNumber" required />
+    </div>
 
-    <br><br>
+    <div>
+      <label>Due date</label>
+      <input type="date" id="dueDate" required />
+    </div>
 
-    <button type="submit">Create order</button>
+    <div class="full">
+      <label>Product type</label>
+      <select id="productType" required>
+        <option value="">Select product</option>
+        <option value="hardcover_book">Hardcover book</option>
+        <option value="perfect_bound_book">Perfect bound book</option>
+        <option value="saddle_stitching">Saddle stitching</option>
+      </select>
+    </div>
+
+    <div class="full">
+      <button type="submit">Create Order</button>
+    </div>
+
   </form>
 
   <p id="status"></p>
 
-  <script>
-    const form = document.getElementById("orderForm");
-    const status = document.getElementById("status");
+</div>
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+<script>
+  const form = document.getElementById("orderForm");
+  const status = document.getElementById("status");
 
-      const orderNumber = document.getElementById("orderNumber").value;
-      const dueDate = document.getElementById("dueDate").value;
-      const productType = document.getElementById("productType").value;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      try {
-        const res = await fetch("http://localhost:3000/orders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // jeśli masz auth:
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-          },
-          body: JSON.stringify({
-            orderNumber,
-            dueDate,
-            productType
-          })
-        });
+    const orderNumber = document.getElementById("orderNumber").value;
+    const dueDate = document.getElementById("dueDate").value;
+    const productType = document.getElementById("productType").value;
 
-        const data = await res.json();
+    try {
+      const res = await fetch("http://localhost:3000/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        body: JSON.stringify({
+          orderNumber,
+          dueDate,
+          productType
+        })
+      });
 
-        if (!res.ok) {
-          throw new Error(data.message || "Error");
-        }
+      const data = await res.json();
 
-        status.innerText = "Order created successfully";
-        form.reset();
-
-      } catch (err) {
-        status.innerText = "Error: " + err.message;
+      if (!res.ok) {
+        throw new Error(data.message || "Error");
       }
-    });
-  </script>
+
+      status.innerText = "Order created successfully";
+      form.reset();
+
+    } catch (err) {
+      status.innerText = "Error: " + err.message;
+    }
+  });
+</script>
 
 </body>
 </html>

@@ -2,9 +2,6 @@ import { Request, Response } from 'express';
 import { createOrderService, getOrdersService, getOrderService, getMyOrdersService, nextStepService } from './orders.service';
 import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
-import  { roleStatusMap }  from '../orders/orders.workflow';
-import { Prisma, order, product_type } from '@prisma/client';
-//import { canWorkOnOrder } from './order.access.service';
 
 export const getOrders = async (req: Request, res: Response) => {
   const orders = await getOrdersService();

@@ -13,32 +13,49 @@ export const getOrdersService = async () => {
     });
 };
 
-export const getMyOrdersService = async (userRole: employee_role) => {
+export const getMyOrdersService = async (
+  userRole: employee_role
+) => {
   const access = roleStatusMap[userRole];
 
   if (!access) {
     throw new HttpError('No access', 403);
   }
 
-  const orders = await prisma.order.findMany();
+  if (access.type === "ALL") {
+    return prisma.order.findMany({
+      orderBy: {
+        due_date: 'asc'
+      }
+    });
+  }
+
+  const orders = await prisma.order.findMany({
+    orderBy: {
+      due_date: 'asc'
+    }
+  });
 
   return orders.filter(order => {
     const productWorkflow = workflow[order.product_type];
 
     if (!productWorkflow) return false;
 
-    const roleSteps =
-      access.type === "ALL"
-        ? (Object.keys(productWorkflow) as OrderStatus[])
-        : access.steps;
-
-    const validSteps = roleSteps.filter(
+    const validSteps = access.steps.filter(
       step => productWorkflow[step] !== undefined
     );
 
-    return validSteps.some(step =>
-      !order.completed_steps.includes(step)
-    );
+    return validSteps.some(step => {
+      if (order.completed_steps.includes(step)) {
+        return false;
+      }
+      
+      const deps = productWorkflow[step] ?? [];
+
+      return deps.every(dep =>
+        order.completed_steps.includes(dep)
+      );
+    });
   });
 };
 

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>All Orders</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0b;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    h1 {
+      color: #ff2a2a;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    button {
+      background: #ff2a2a;
+      border: none;
+      padding: 10px 14px;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    button:hover {
+      background: #c90000;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #141414;
+      border-left: 4px solid #ff2a2a;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #333;
+      margin-top: 10px;
+    }
+
+    .label {
+      color: #ff2a2a;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>ALL ORDERS</h1>
+
+  <button id="backBtn">Back</button>
+
+  <ul id="ordersList"></ul>
+
+</div>
+
+<script>
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    window.location.href = "/login.html";
+  }
+
+  const ordersList = document.getElementById("ordersList");
+
+  async function loadOrders() {
+    try {
+      const response = await fetch("/orders", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch orders");
+      }
+
+      const orders = await response.json();
+
+      ordersList.innerHTML = "";
+
+      orders.forEach(order => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+          <div><span class="label">Order:</span> ${order.order_number}</div>
+          <div><span class="label">Product:</span> ${order.product_type}</div>
+          <div><span class="label">Due:</span> ${new Date(order.due_date).toLocaleDateString()}</div>
+          <div><span class="label">Steps:</span> ${
+            order.completed_steps?.length
+              ? order.completed_steps.join(", ")
+              : "none"
+          }</div>
+        `;
+
+        ordersList.appendChild(li);
+      });
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  document.getElementById("backBtn").addEventListener("click", () => {
+    window.location.href = "/index.html";
+  });
+
+  loadOrders();
+</script>
+
+</body>
+</html>

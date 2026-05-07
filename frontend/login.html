@@ -3,18 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <title>Login</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at top, #1a1a1a, #0b0b0b);
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .wrapper {
+      width: 340px;
+    }
+
+    .title {
+      text-align: center;
+      color: #ff2a2a;
+      font-size: 26px;
+      letter-spacing: 2px;
+      margin-bottom: 25px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      color: white;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .input:focus {
+      border-color: #ff2a2a;
+      box-shadow: 0 0 10px rgba(255, 42, 42, 0.25);
+    }
+
+    .button {
+      width: 100%;
+      padding: 12px;
+      background: #ff2a2a;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: 0.2s;
+    }
+
+    .button:hover {
+      background: #d10000;
+      transform: translateY(-1px);
+    }
+
+    .error {
+      margin-top: 12px;
+      text-align: center;
+      color: #ff4d4d;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
 
-  <h1>Login</h1>
+  <div class="wrapper">
 
-  <input id="login" placeholder="Login" /><br /><br />
-  <input id="password" type="password" placeholder="Password" /><br /><br />
+    <div class="title">LOGIN</div>
 
+    <input id="login" class="input" placeholder="Username" />
+    <input id="password" class="input" type="password" placeholder="Password" />
 
-  <button onclick="login()">Zaloguj</button>
+    <button class="button" onclick="login()">SIGN IN</button>
 
-  <p id="error" style="color:red;"></p>
+    <div id="error" class="error"></div>
+
+  </div>
 
   <script>
     async function login() {
@@ -30,13 +101,12 @@
       });
 
       if (!res.ok) {
-        document.getElementById("error").innerText = "Błędny login lub hasło";
+        document.getElementById("error").innerText =
+          "Invalid credentials";
         return;
       }
 
       const data = await res.json();
-
-      
 
       localStorage.setItem("token", data.token);
 
