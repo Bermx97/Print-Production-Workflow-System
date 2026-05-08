@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Details</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0b;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 30px;
+    }
+
+    h1 {
+      color: #ff2a2a;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: #141414;
+      border-left: 4px solid #ff2a2a;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    .label {
+      color: #ff2a2a;
+      font-weight: bold;
+    }
+
+    button {
+      background: #ff2a2a;
+      border: none;
+      padding: 10px 14px;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 15px;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background: #c90000;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>ORDER DETAILS</h1>
+
+  <div class="card" id="orderCard">
+    Loading...
+  </div>
+
+  <button onclick="goBack()">Back</button>
+  <button onclick="nextStep()">Next Step</button>
+
+</div>
+
+<script>
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    window.location.href = "/login.html";
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const orderNumber = params.get("orderNumber");
+
+  const card = document.getElementById("orderCard");
+
+  async function loadOrder() {
+    try {
+      const res = await fetch(`/orders/${orderNumber}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to load order");
+      }
+
+      const order = await res.json();
+
+      card.innerHTML = `
+        <div><span class="label">Order:</span> ${order.order_number}</div>
+        <div><span class="label">Product:</span> ${order.product_type}</div>
+        <div><span class="label">Due date:</span> ${new Date(order.due_date).toLocaleDateString()}</div>
+        <div><span class="label">Completed steps:</span> ${
+          order.completed_steps?.length
+            ? order.completed_steps.join(", ")
+            : "none"
+        }</div>
+      `;
+
+    } catch (err) {
+      card.innerHTML = "Error loading order";
+      console.error(err);
+    }
+  }
+
+  async function nextStep() {
+    try {
+      const res = await fetch(`/orders/${orderNumber}/nextStep`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        alert("Cannot move to next step");
+        return;
+      }
+
+      loadOrder();
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function goBack() {
+    window.location.href = "/all-orders.html";
+  }
+
+  loadOrder();
+</script>
+
+</body>
+</html>

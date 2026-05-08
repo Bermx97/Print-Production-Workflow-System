@@ -2,10 +2,7 @@ import request from 'supertest';
 import app from '../../../src/app';
 import prisma from '../../../src/lib/prisma';
 import { getAuthToken } from '../../utils/auth';
-
-import  { roleStatusMap }  from '../../../src/modules/orders/orders.workflow';
-
-let token: string;
+import { createOrder } from "../../utils/order";
 
 beforeEach(async () => {
   await prisma.$executeRawUnsafe(`
@@ -15,23 +12,21 @@ beforeEach(async () => {
 
 describe('GET /orders/my', () => {
   it('should return only executable orders for role', async () => {
-    const auth = await getAuthToken('folding_operator');
-
-    token = auth.token;
+    const {token, user: { id } } = await getAuthToken('folding_operator');
 
     await prisma.order.createMany({
       data: [
         {
           order_number: 1,
           due_date: new Date('2026-08-01'),
-          created_by: auth.user.id,
+          created_by: id,
           product_type: 'hardcover_book',
           completed_steps: []
         },
         {
           order_number: 2,
           due_date: new Date('2026-08-01'),
-          created_by: auth.user.id,
+          created_by: id,
           product_type: 'hardcover_book',
           completed_steps: ['printing']
         }
@@ -43,17 +38,14 @@ describe('GET /orders/my', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-
     expect(response.body).toHaveLength(1);
-
     expect(response.body[0].order_number).toBe(2);
   });
 });
 
 describe('GET /orders', () => {
   it('should return 200 if orders exist', async () => {
-    const auth = await getAuthToken();
-    token = auth.token;
+    const { token } = await getAuthToken();
     const response = await request(app)
     .get('/orders')
     .set("Authorization", `Bearer ${token}`);
@@ -72,8 +64,7 @@ describe('GET /orders', () => {
 
 describe('GET /orders/:orderNumber', () => {
   it('should return 404 if order not found', async () => {
-    const auth = await getAuthToken();
-    token = auth.token
+    const { token } = await getAuthToken();
     const response = await request(app)
     .get('/orders/10')
     .set("Authorization", `Bearer ${token}`);
@@ -85,27 +76,22 @@ describe('GET /orders/:orderNumber', () => {
   it('should return 401 if user is not logged', async () => {
     const response = await request(app)
     .get('/orders/1');
+
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Not authorized');
-  })
+  });
 
   it('should return 200 and the searched order if it exists', async () => {
-    const auth = await getAuthToken();
-    token = auth.token
-    await prisma.order.create({
-      data : {
-        order_number: 100, due_date: new Date('2026-08-01') , created_by: auth.user.id, product_type: 'hardcover_book'
-      }
-    });
+    const { token } = await getAuthToken()
+    const { order_number } = await createOrder('hardcover_book');
 
     const response = await request(app)
-    .get('/orders/100')
+    .get(`/orders/${order_number}`)
     .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
-      order_number: 100,
-      created_by: auth.user.id
+      order_number: order_number,
     });
   });
 });
@@ -139,6 +125,21 @@ describe('POST /orders', () => {
     expect(response.body.message).toBe('dueDate must be a valid date');
   });
 
+  it('should return 400 if productType is invalid', async () => {
+  const { user: { id } } = await getAuthToken()
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'invalid type'
+  });
+
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Invalid product type');
+  });
+
   it('should return 401 if user is not logged', async () => {
     const response = await request(app)
     .post('/orders')
@@ -153,9 +154,10 @@ describe('POST /orders', () => {
     expect(response.body.message).toBe('Not authorized');
     });
 
+    
+
   it('should return 409 if order already exists', async () => {
-    const auth = await getAuthToken();
-    token = auth.token;
+    const { token } = await getAuthToken();
     const orderNumber = Number(Math.floor(Math.random() * 10000));
     const data = { orderNumber, dueDate: new Date('2026-08-01'), productType: 'hardcover_book' };
 
@@ -174,8 +176,8 @@ describe('POST /orders', () => {
   });
 
   it('should return 201 if the addition was successful', async () => {
-    const auth = await getAuthToken();
-    token = auth.token;
+    const { token, user: { id } } = await getAuthToken();
+ 
     const orderNumber = Number(Math.floor(Math.random() * 10000));
     const data = {orderNumber, dueDate: new Date("2026-08-01"), productType: 'hardcover_book' }
 
@@ -187,7 +189,7 @@ describe('POST /orders', () => {
     expect(response.body).toMatchObject({
       message: `Order ${orderNumber} created`, order: {
         order_number: data.orderNumber,
-        created_by: auth.user.id
+        created_by: id
       }
     });
   });

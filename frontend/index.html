@@ -66,6 +66,16 @@
       margin-bottom: 15px;
       border-left: 4px solid #ff2a2a;
       box-shadow: 0 0 10px rgba(255, 42, 42, 0.1);
+      cursor: pointer;
+
+      transition: 0.2s ease;
+    }
+
+    .order-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 18px rgba(255, 42, 42, 0.25);
+      border-left-color: #ff4d4d;
+      background: #1a1a1a;
     }
 
     .order-title {
@@ -135,18 +145,24 @@
       const div = document.createElement("div");
       div.className = "order-card";
 
+      div.onclick = () => {
+        window.location.href = `/order.html?orderNumber=${order.order_number}`;
+      };
+
       div.innerHTML = `
         <div class="order-title">
           Order #${order.order_number}
         </div>
 
         <div class="steps">
-          Steps: ${order.completed_steps.length
-            ? order.completed_steps.join(", ")
-            : "none"}
+          Steps: ${
+            order.completed_steps.length
+              ? order.completed_steps.join(", ")
+              : "none"
+          }
         </div>
 
-        <button onclick="completeOrder(${order.order_number})">
+        <button onclick="event.stopPropagation(); completeOrder(${order.order_number})">
           Complete step
         </button>
       `;

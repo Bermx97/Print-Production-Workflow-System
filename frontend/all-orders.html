@@ -51,6 +51,11 @@
       padding: 15px;
       margin-bottom: 12px;
       border-radius: 6px;
+      cursor: pointer;
+    }
+
+    li:hover {
+      background: #1c1c1c;
     }
 
     hr {
@@ -116,6 +121,10 @@
               : "none"
           }</div>
         `;
+
+        li.addEventListener("click", () => {
+          window.location.href = `/order.html?orderNumber=${order.order_number}`;
+        });
 
         ordersList.appendChild(li);
       });
