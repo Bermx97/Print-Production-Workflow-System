@@ -7,6 +7,7 @@ type AuthResponse = {
   user: {
     id: string;
     role: employee_role;
+    login: string;
   };
 };
 

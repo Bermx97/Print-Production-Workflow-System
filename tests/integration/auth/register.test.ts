@@ -1,22 +1,14 @@
 import request from "supertest";
 import app from "../../../src/app";
 import prisma from "../../../src/lib/prisma";
+import { getAuthToken } from "../../utils/auth";
 
 
 beforeEach(async () => {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE "order", "employee" RESTART IDENTITY CASCADE;
   `);
-
-  await prisma.employee.create({
-    data : {
-      login: 'Test409',
-      hashed_password: 'Test409',
-      role: 'admin'
-    }
-  })
 });
-
 
 describe('POST auth/register', () => {
   it('should return 400 if the login is empty', async () => {
@@ -59,10 +51,11 @@ describe('POST auth/register', () => {
     });
 
   it('should return 409 if the login already exists', async () => {
+    const { user: {login} } = await getAuthToken();
     const response = await request(app)
     .post('/auth/register')
     .send({
-      login: 'Test409',
+      login: login,
       password: 'Test 409',
       role: 'admin'
     });

@@ -10,6 +10,7 @@
       font-family: Arial, sans-serif;
       background: #0b0b0b;
       color: #fff;
+      font-size: 18px;
     }
 
     .container {
@@ -22,6 +23,7 @@
       color: #ff2a2a;
       margin-bottom: 10px;
       letter-spacing: 1px;
+      font-size: 34px;
     }
 
     .subtitle {
@@ -41,7 +43,7 @@
     }
 
     label {
-      font-size: 12px;
+      font-size: 14px;
       color: #aaa;
       margin-bottom: 6px;
       display: block;
@@ -56,6 +58,7 @@
       color: white;
       outline: none;
       margin-bottom: 15px;
+      font-size: 16px;
     }
 
     input:focus, select:focus {
@@ -76,6 +79,7 @@
       font-weight: bold;
       transition: 0.2s;
       width: 100%;
+      font-size: 16px;
     }
 
     button:hover {
@@ -119,6 +123,23 @@
       </select>
     </div>
 
+    <!-- NOWE POLA -->
+
+    <div>
+      <label>Customer</label>
+      <input type="text" id="customer" />
+    </div>
+
+    <div>
+      <label>Quantity</label>
+      <input type="number" id="quantity" />
+    </div>
+
+    <div class="full">
+      <label>Number of pages</label>
+      <input type="number" id="numberOfPages" />
+    </div>
+
     <div class="full">
       <button type="submit">Create Order</button>
     </div>
@@ -140,6 +161,10 @@
     const dueDate = document.getElementById("dueDate").value;
     const productType = document.getElementById("productType").value;
 
+    const customer = document.getElementById("customer").value;
+    const quantity = document.getElementById("quantity").value;
+    const numberOfPages = document.getElementById("numberOfPages").value;
+
     try {
       const res = await fetch("http://localhost:3000/orders", {
         method: "POST",
@@ -150,7 +175,10 @@
         body: JSON.stringify({
           orderNumber,
           dueDate,
-          productType
+          productType,
+          customer,
+          quantity,
+          numberOfPages
         })
       });
 

@@ -2,7 +2,7 @@ import request from "supertest";
 import app from "../../../src/app";
 import prisma from "../../../src/lib/prisma";
 import { getAuthToken } from '../../utils/auth';
-import { createOrder } from "../../utils/order";
+import { createOrder, getRandomClient, getRandomEvenPages, getRandomQuantity } from "../../utils/order";
 
 beforeEach(async () => {
   await prisma.$executeRawUnsafe(`
@@ -13,7 +13,7 @@ beforeEach(async () => {
 it('should create an order and return it', async () => {
     const { token, user: {id} } = await getAuthToken();
     const orderNumber = Number(Math.floor(Math.random() * 10000));
-    const data = { orderNumber, dueDate: new Date('2026-08-01'), productType: 'hardcover_book' };
+    const data = { orderNumber, dueDate: new Date('2026-08-01'), productType: 'hardcover_book', quantity: getRandomQuantity(), customer: getRandomClient(), numberOfPages: getRandomEvenPages() };
 
     const createOrder = await request(app)
     .post('/orders')

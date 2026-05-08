@@ -15,6 +15,9 @@ model order {
   created_by   String
   createdBy    employee     @relation("CreatedOrders", fields: [created_by], references: [id])
   product_type product_type
+  quantity Int
+  customer String
+  number_of_pages Int
 }
 
 model employee {

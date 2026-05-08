@@ -24,7 +24,7 @@ export const getOrderByNumber = async (req: Request, res: Response) => {
 };
 
 export const createOrder = async (req: Request, res: Response) => {
-  const { orderNumber, dueDate, productType } = req.body;
+  const { orderNumber, dueDate, productType, quantity, customer, numberOfPages } = req.body;
   const existing = await prisma.order.findUnique({
     where: { order_number: orderNumber }
   });
@@ -37,13 +37,15 @@ export const createOrder = async (req: Request, res: Response) => {
     order_number: Number(orderNumber),
     due_date: new Date(dueDate),
     product_type: productType,
-    createdBy: { connect: { id: req.user.id } }
+    createdBy: { connect: { id: req.user.id } },
+    quantity: quantity,
+    customer: customer,
+    number_of_pages: numberOfPages
   }
 
   const result = await createOrderService(data);
   res.status(201).json({ message: `Order ${orderNumber} created`, order: result });
 };
-//stestuj
 
 export const nextStep = async (req: Request, res: Response) => {
   const { orderNumber } = req.params;

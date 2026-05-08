@@ -62,5 +62,4 @@ export const registerEmployee = async (req: Request<{}, {}, RegisterBody>, res: 
   const hashedPassword = await bcrypt.hash(password, 10);
   const result = await createEmployee(login, hashedPassword, role);
   res.status(201).json({ message: `User ${result.login} with role ${result.role} created` });
- 
-}
+};

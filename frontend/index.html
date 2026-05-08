@@ -10,6 +10,7 @@
       font-family: Arial, sans-serif;
       background:#000000;
       color: #fff;
+      font-size: 18px;
     }
 
     .container {
@@ -22,6 +23,7 @@
       color: #ff2a2a;
       margin-bottom: 20px;
       letter-spacing: 1px;
+      font-size: 34px;
     }
 
     .top-bar {
@@ -40,6 +42,7 @@
       cursor: pointer;
       font-weight: bold;
       transition: 0.2s;
+      font-size: 16px;
     }
 
     button:hover {
@@ -67,8 +70,8 @@
       border-left: 4px solid #ff2a2a;
       box-shadow: 0 0 10px rgba(255, 42, 42, 0.1);
       cursor: pointer;
-
       transition: 0.2s ease;
+      font-size: 18px;
     }
 
     .order-card:hover {
@@ -82,12 +85,13 @@
       color: #ff2a2a;
       font-weight: bold;
       margin-bottom: 6px;
+      font-size: 20px;
     }
 
     .steps {
       color: #ccc;
       margin-bottom: 10px;
-      font-size: 14px;
+      font-size: 16px;
     }
   </style>
 </head>
@@ -155,6 +159,10 @@
         </div>
 
         <div class="steps">
+          Customer: ${order.customer ?? "none"}<br>
+          Quantity: ${order.quantity ?? "none"}<br>
+          Pages: ${order.number_of_pages ?? "none"}<br><br>
+
           Steps: ${
             order.completed_steps.length
               ? order.completed_steps.join(", ")

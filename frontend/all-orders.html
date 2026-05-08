@@ -11,6 +11,7 @@
       font-family: Arial, sans-serif;
       background: #0b0b0b;
       color: #fff;
+      font-size: 18px;
     }
 
     .container {
@@ -23,6 +24,7 @@
       color: #ff2a2a;
       margin-bottom: 20px;
       letter-spacing: 1px;
+      font-size: 34px;
     }
 
     button {
@@ -34,6 +36,7 @@
       cursor: pointer;
       font-weight: bold;
       margin-bottom: 20px;
+      font-size: 16px;
     }
 
     button:hover {
@@ -52,6 +55,7 @@
       margin-bottom: 12px;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 18px;
     }
 
     li:hover {
@@ -67,6 +71,7 @@
     .label {
       color: #ff2a2a;
       font-weight: bold;
+      font-size: 18px;
     }
   </style>
 </head>
@@ -114,6 +119,9 @@
         li.innerHTML = `
           <div><span class="label">Order:</span> ${order.order_number}</div>
           <div><span class="label">Product:</span> ${order.product_type}</div>
+          <div><span class="label">Customer:</span> ${order.customer ?? "none"}</div>
+          <div><span class="label">Quantity:</span> ${order.quantity ?? "none"}</div>
+          <div><span class="label">Pages:</span> ${order.number_of_pages ?? "none"}</div>
           <div><span class="label">Due:</span> ${new Date(order.due_date).toLocaleDateString()}</div>
           <div><span class="label">Steps:</span> ${
             order.completed_steps?.length

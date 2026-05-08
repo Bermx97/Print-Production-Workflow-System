@@ -8,14 +8,6 @@ beforeEach(async () => {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE "order", "employee" RESTART IDENTITY CASCADE;
   `);
-
-  await prisma.employee.create({
-    data : {
-      login: 'loginTest',
-      hashed_password: await bcrypt.hash('password', 10),
-      role: 'admin'
-    }
-  })
 });
 
 describe('POST /auth/login', () => {
@@ -70,6 +62,14 @@ describe('POST /auth/login', () => {
     });
 
     it('returns 200 if login was successful', async () => {
+        await prisma.employee.create({
+            data : {
+                login: 'loginTest',
+                hashed_password: await bcrypt.hash('password', 10),
+                role: 'admin'
+            }
+        });
+        
         const response = await request(app)
         .post('/auth/login')
         .send({
