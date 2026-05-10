@@ -45,7 +45,8 @@ it('should reject the step when missing dependencies', async () => {
 
   const nextStep = await request(app)
   .post(`/orders/${order_number}/nextStep`)
-  .set("Authorization", `Bearer ${token}`);
+  .set("Authorization", `Bearer ${token}`)
+  .send({ stepQuantities: 500 })
 
   expect(nextStep.status).toBe(409);
   expect(nextStep.body.message).toBe('No available steps');
@@ -57,7 +58,8 @@ it('should allow the step', async () => {
 
   const nextStep = await request(app)
   .post(`/orders/${order_number}/nextStep`)
-  .set("Authorization", `Bearer ${token}`);
+  .set("Authorization", `Bearer ${token}`)
+  .send({ stepQuantities: 500 });
 
   const updatedOrder = await prisma.order.findUnique({
     where: { order_number: order_number }
@@ -73,6 +75,7 @@ it('should reject step when dependencies missing', async () => {
   const nextStep = await request(app)
   .post(`/orders/${order_number}/nextStep`)
   .set("Authorization", `Bearer ${token}`)
+  .send({ stepQuantities: 500 })
   .expect(409);
 
   const order = await prisma.order.findUnique({
@@ -88,7 +91,8 @@ it('should reject the step when step already completed', async () => {
 
   const nextStep = await request(app)
   .post(`/orders/${order_number}/nextStep`)
-  .set("Authorization", `Bearer ${token}`);
+  .set("Authorization", `Bearer ${token}`)
+  .send({ stepQuantities: 500 });
 
   expect(nextStep.status).toBe(409);
   expect(nextStep.body.message).toBe('No available steps');
@@ -100,7 +104,8 @@ it('should allow the step', async () => {
 
   const caseNextStep = await request(app)
   .post(`/orders/${order_number}/nextStep`)
-  .set("Authorization", `Bearer ${caseMakerToken}`);
+  .set("Authorization", `Bearer ${caseMakerToken}`)
+  .send({ stepQuantities: 330});
 
   expect(caseNextStep.status).toBe(200);
 
@@ -114,7 +119,8 @@ it('should allow the step', async () => {
 
   const sawingNextStep = await request(app)
   .post(`/orders/${order_number}/nextStep`)
-  .set("Authorization", `Bearer ${sewingOperatorToken}`);
+  .set("Authorization", `Bearer ${sewingOperatorToken}`)
+  .send({ stepQuantities: 320});
   
   expect(sawingNextStep.status).toBe(200);
 
@@ -128,7 +134,8 @@ it('should allow the step', async () => {
 
   const hardcoverNextStep = await request(app)
   .post(`/orders/${order_number}/nextStep`)
-  .set("Authorization", `Bearer ${hardcoverOperatorToken}`);
+  .set("Authorization", `Bearer ${hardcoverOperatorToken}`)
+  .send({ stepQuantities: 310});
 
   expect(hardcoverNextStep.status).toBe(200);
 

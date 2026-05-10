@@ -47,12 +47,24 @@ export const roleStatusMap: Record<employee_role, RoleAccess> = {
   admin: { type: 'ALL' }
 };
 
+export function getWorkflow(productType: ProductType): OrderStatus[] {
+  const graph = workflow[productType];
 
+  const result: OrderStatus[] = [];
+  const visited = new Set<OrderStatus>();
 
+  function visit(step: OrderStatus) {
+    if (visited.has(step)) return;
 
+    const deps = graph?.[step] ?? [];
 
+    deps.forEach(visit);
 
+    visited.add(step);
+    result.push(step);
+  }
 
+  Object.keys(graph).forEach(step => visit(step as OrderStatus));
 
-
-
+  return result;
+}

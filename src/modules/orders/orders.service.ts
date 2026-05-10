@@ -1,7 +1,7 @@
 import prisma from '../../lib/prisma';
 import { Prisma } from '@prisma/client';
 import { HttpError } from '../../utils/errors';
-import { employee_role } from '@prisma/client';
+import { employee_role, step_name, step_event_type } from '@prisma/client';
 import { roleStatusMap, workflow } from './orders.workflow';
 import { OrderStatus, ORDER_STATUSES } from '../../types/orderStatus';
 
@@ -75,12 +75,10 @@ export const createOrderService = async (data: CreateOrderData) => {
     return await prisma.order.create({ data });
 };
 
-
-
-export const nextStepService = async (orderNumber: number,userRole: employee_role) => {
+export const nextStepService = async (orderNumber: number, role: employee_role, id: string, stepQuantities: Record<OrderStatus, number>) => {
   const order = await getOrderService(orderNumber);
 
-  const access = roleStatusMap[userRole];
+  const access = roleStatusMap[role];
 
   if (!access) {
     throw new HttpError('Role not found', 403);
@@ -94,7 +92,7 @@ export const nextStepService = async (orderNumber: number,userRole: employee_rol
 
   const roleSteps =
     access.type === 'ALL'
-      ? Object.keys(productWorkflow) as OrderStatus[]
+      ? (Object.keys(productWorkflow) as OrderStatus[])
       : access.steps;
 
   const validSteps = roleSteps.filter(
@@ -116,6 +114,7 @@ export const nextStepService = async (orderNumber: number,userRole: employee_rol
   }
 
   const step = availableSteps[0];
+
   const dependencies = productWorkflow?.[step] ?? [];
 
   const canExecute = dependencies.every(dep =>
@@ -126,12 +125,94 @@ export const nextStepService = async (orderNumber: number,userRole: employee_rol
     throw new HttpError('Step blocked by dependencies', 409);
   }
 
-  return prisma.order.update({
+  const quantity = Number(stepQuantities);
+
+
+  const existingQuantities: Record<string, number> =
+    (order.step_quantities as Record<string, number>) ?? {};
+
+  const updatedQuantities: Record<string, number> = {
+    ...existingQuantities,
+    [step]: quantity
+  };
+
+
+  return await prisma.order.update({
     where: { order_number: orderNumber },
     data: {
       completed_steps: {
         push: step
-      }
+      },
+      step_quantities: updatedQuantities
     }
   });
+}
+
+
+
+export const createStepLogService = async (orderNumber: number, id: string, eventType: step_event_type, stepName: step_name) => {
+    const order = await getOrderService(orderNumber);
+
+    if (!order) throw new HttpError('Order not found', 404);
+    
+    const lastLog = await prisma.step_logs.findFirst({
+  where: {
+    order_id: order.id,
+    step_name: stepName
+  },
+  orderBy: {
+    created_at: 'desc'
+  }
+});
+
+const isActive = lastLog?.event_type === 'START';
+if (eventType === 'START' && isActive) {
+  throw new HttpError('Step already started', 409);
+}
+if (eventType === 'END' && !isActive) {
+  throw new HttpError('Step not started', 409);
+}
+
+    const logData = {
+    step_name: stepName,
+    order_id: order.id,
+    employee: id,
+    event_type: eventType
+  }
+  const log = await prisma.step_logs.create(
+    { data: logData }
+  )
+  return log
+}
+
+
+export const getOrderStateService = async (orderNumber: number) => {
+  const order = await getOrderService(orderNumber);
+
+  const logs = await prisma.step_logs.findMany({
+    where: { order_id: order.id },
+    orderBy: { created_at: "asc" },
+  });
+
+  const stepMap = new Map<string, { start: boolean; end: boolean }>();
+
+  for (const log of logs) {
+    if (!stepMap.has(log.step_name)) {
+      stepMap.set(log.step_name, { start: false, end: false });
+    }
+
+    const step = stepMap.get(log.step_name)!;
+
+    if (log.event_type === "START") step.start = true;
+    if (log.event_type === "END") step.end = true;
+  }
+
+  const currentStep = [...stepMap.entries()].find(
+    ([_, value]) => value.start && !value.end
+  )?.[0] ?? null;
+
+  return {
+    logs,
+    currentStep,
+  };
 };

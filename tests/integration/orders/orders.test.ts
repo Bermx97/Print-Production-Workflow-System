@@ -92,7 +92,8 @@ describe('POST /orders', () => {
       productType: 'hardcover_book',
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
-      number_of_pages: getRandomEvenPages()
+      numberOfPages: getRandomEvenPages(),
+      stepQuantities: 600
     })
     .set("Authorization", `Bearer ${token}`);
 
@@ -111,7 +112,8 @@ describe('POST /orders', () => {
       productType: 'hardcover_book',
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
-      number_of_pages: getRandomEvenPages()
+      numberOfPages: getRandomEvenPages(),
+      stepQuantities: 550
     })
     .set("Authorization", `Bearer ${token}`);
 
@@ -130,7 +132,8 @@ describe('POST /orders', () => {
     productType: 'invalid type',
     quantity: getRandomQuantity(),
     customer: getRandomClient(),
-    number_of_pages: getRandomEvenPages()
+    numberOfPages: getRandomEvenPages(),
+    stepQuantities: 550
   })
   .set("Authorization", `Bearer ${token}`);
   
@@ -148,7 +151,8 @@ describe('POST /orders', () => {
       productType: 'hardcover_book',
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
-      number_of_pages: getRandomEvenPages()
+      numberOfPages: getRandomEvenPages(),
+      stepQuantities: 500
     });
 
     expect(response.status).toBe(401);

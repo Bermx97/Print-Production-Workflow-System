@@ -33,7 +33,7 @@ export const createOrderValidation = [
     .notEmpty()
     .withMessage('Number of pages are required')
     .isInt({ gt: 0 })
-    .withMessage('Quantity must be greater than 0')
+    .withMessage('Number of pages must be greater than 0')
     .toInt()
     .withMessage('Number of pages must be a number'),
 ];

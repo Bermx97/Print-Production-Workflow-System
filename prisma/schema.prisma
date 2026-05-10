@@ -18,6 +18,8 @@ model order {
   quantity Int
   customer String
   number_of_pages Int
+  step_quantities Json?
+  step_logs step_logs[]
 }
 
 model employee {
@@ -26,6 +28,23 @@ model employee {
   hashed_password String
   role            employee_role
   createdOrders   order[]       @relation("CreatedOrders")
+  step_logs step_logs[]
+}
+
+model step_logs {
+  id         String           @id @default(uuid())
+  step_name  step_name
+  order_id   String
+  event_type step_event_type
+  created_at DateTime @default(now())
+  employee   String
+
+  order      order     @relation(fields: [order_id], references: [id])
+  employeeRel employee  @relation(fields: [employee], references: [id])
+
+  @@index([order_id])
+  @@index([step_name])
+  @@index([created_at])
 }
 
 enum employee_role {
@@ -48,4 +67,22 @@ enum product_type {
   hardcover_book
   perfect_bound_book
   saddle_stitching
+}
+
+enum step_event_type {
+  START
+  END
+  PAUSE
+  RESUME
+}
+
+enum step_name {
+  printing
+  folding
+  sewing
+  case_making
+  folding_with_milling
+  hardcover_binding
+  binding
+  stitching
 }

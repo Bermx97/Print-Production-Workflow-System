@@ -1,6 +1,7 @@
 import express from 'express';
 import authRoutes from './modules/auth/auth.routes';
 import ordersRoutes from './modules/orders/orders.routes';
+import ordersV2Routes from './modules/orders/orders-v2/routes'
 import errorHandler from './middlewares/errorHandler';
 import cors from 'cors';
 import path from "path";
@@ -19,6 +20,7 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoutes);
 app.use('/orders', ordersRoutes);
+app.use('/orders-v2', ordersV2Routes);
 
 
 app.use(errorHandler);

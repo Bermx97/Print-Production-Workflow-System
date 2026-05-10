@@ -103,6 +103,7 @@
       }
 
       const order = await res.json();
+      const workflow = order.workflow ?? [];
 
       card.innerHTML = `
         <div class="label">Order</div>
@@ -111,15 +112,27 @@
         <div class="label">Product</div>
         <div class="value">${order.product_type}</div>
 
+        <div class="label">Customer</div>
+        <div class="value">${order.customer ?? "none"}</div>
+
         <div class="label">Due date</div>
         <div class="value">${new Date(order.due_date).toLocaleDateString()}</div>
 
-        <div class="label">Completed steps</div>
-        <div class="value">${
-          order.completed_steps?.length
-            ? order.completed_steps.join(", ")
-            : "none"
-        }</div>
+        <div class="label">Workflow</div>
+        <div class="value">
+          ${
+            workflow.length
+              ? workflow.map(step => {
+                  const done = order.completed_steps?.includes(step);
+                  const qty = order.step_quantities?.[step];
+
+                  return `
+                    ${done ? "✔" : "⏳"} ${step} — ${qty ?? "-"}
+                  `;
+                }).join("<br>")
+              : "no workflow"
+          }
+        </div>
       `;
 
     } catch (err) {

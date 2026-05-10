@@ -93,6 +93,59 @@
       margin-bottom: 10px;
       font-size: 16px;
     }
+
+    /* MODAL */
+
+    #quantityModal {
+      display: none;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #141414;
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 4px solid #ff2a2a;
+      width: 320px;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      color: #ff2a2a;
+    }
+
+    .modal p {
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background: #1f1f1f;
+      border: 1px solid #333;
+      color: white;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
   </style>
 </head>
 
@@ -120,6 +173,23 @@
 
 </div>
 
+<!-- MODAL -->
+<div id="quantityModal">
+  <div class="modal-backdrop"></div>
+
+  <div class="modal">
+    <h2>Complete step</h2>
+    <p>Enter completed quantity</p>
+
+    <input id="quantityInput" type="number" min="0" />
+
+    <div class="modal-actions">
+      <button onclick="confirmQuantity()">Confirm</button>
+      <button class="secondary" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const token = localStorage.getItem("token");
 
@@ -127,11 +197,43 @@
     window.location.href = "/login.html";
   }
 
-  document
-    .getElementById("allOrdersBtn")
+  document.getElementById("allOrdersBtn")
     .addEventListener("click", () => {
       window.location.href = "/all-orders.html";
     });
+
+  let currentOrderNumber = null;
+
+  function openModal(orderNumber) {
+    currentOrderNumber = orderNumber;
+    document.getElementById("quantityModal").style.display = "block";
+  }
+
+  function closeModal() {
+    document.getElementById("quantityModal").style.display = "none";
+    document.getElementById("quantityInput").value = "";
+    currentOrderNumber = null;
+  }
+
+  async function confirmQuantity() {
+    const quantity = document.getElementById("quantityInput").value;
+
+    if (!quantity || quantity <= 0) return;
+
+    await fetch(`/orders/${currentOrderNumber}/nextStep`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        stepQuantities: Number(quantity)
+      })
+    });
+
+    closeModal();
+    loadOrders();
+  }
 
   async function loadOrders() {
     const res = await fetch("/orders/my", {
@@ -170,25 +272,13 @@
           }
         </div>
 
-        <button onclick="event.stopPropagation(); completeOrder(${order.order_number})">
+        <button onclick="event.stopPropagation(); openModal(${order.order_number})">
           Complete step
         </button>
       `;
 
       container.appendChild(div);
     });
-  }
-
-  async function completeOrder(orderNumber) {
-    await fetch(`/orders/${orderNumber}/nextStep`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      }
-    });
-
-    loadOrders();
   }
 
   function logout() {
