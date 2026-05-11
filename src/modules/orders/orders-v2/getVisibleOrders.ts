@@ -1,17 +1,14 @@
 import prisma from "../../../lib/prisma";
-
-import { workflow } from "./workflow";
+import { Request, Response } from 'express';
+import { workflow } from "../orders.workflow"; 
 import { roleStatusMap } from "../orders.workflow";
+import { buildState } from "./state/state"; 
+import { canStartStep } from "./domain/canStartStep"; 
 
-import { buildState } from "./state";
-import { canStartStep } from "./canStartStep";
-
-export const getVisibleOrdersV2 = async (req, res) => {
+export const getVisibleOrdersV2 = async (req: Request, res: Response) => {
 
   const role = req.user.role;
-
   const orders = await prisma.order.findMany();
-
   const result = await Promise.all(
 
     orders.map(async (order) => {
@@ -22,28 +19,24 @@ export const getVisibleOrdersV2 = async (req, res) => {
 
       const logs = await prisma.step_logs.findMany({
         where: { order_id: order.id },
-        orderBy: { created_at: "asc" }
+        orderBy: { created_at: 'asc' }
       });
 
       const state = buildState(logs, wf);
-
       const access = roleStatusMap[role];
 
-      // ADMIN FULL ACCESS
-      if (access.type === "ALL") {
+      if (access.type === 'ALL') {
         return { ...order, state };
       }
 
-      // ROLE STEPS ONLY THAT EXIST IN WF
       const allowedSteps = access.steps.filter(
         step => wf[step]
       );
 
-      // 🔥 KLUCZ: visibility = CAN START OR ACTIVE
       const hasVisibleStep = allowedSteps.some(step => {
 
         return (
-          state[step] === "ACTIVE" ||
+          state[step] === 'ACTIVE' ||
           canStartStep(step, state, wf)
         );
       });

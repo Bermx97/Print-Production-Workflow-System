@@ -15,7 +15,7 @@ const router = express.Router();
 router.get('/', isAuthenticated, getOrders);
 router.get('/my',isAuthenticated, getMyOrders );
 router.get('/:orderNumber',isAuthenticated, getOrderByNumber);
-//router.get('/:orderNumber/state', isAuthenticated, getOrderStateFromLogsService);
+
 
 router.post('/', isAuthenticated, canCreateOrder, createOrderValidation, validateRequest, createOrder);
 router.post('/:orderNumber/nextStep', isAuthenticated,

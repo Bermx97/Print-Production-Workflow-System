@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>My Orders</title>
+  <title>My Orders V2.1</title>
 
   <style>
     body {
@@ -95,7 +95,6 @@
     }
 
     /* MODAL */
-
     #quantityModal {
       display: none;
     }
@@ -153,20 +152,11 @@
 
 <div class="container">
 
-  <h1>MY ORDERS</h1>
+  <h1>MY ORDERS (V2.1)</h1>
 
   <div class="top-bar">
-
-    <button id="allOrdersBtn">All Orders</button>
-
     <button class="secondary" onclick="loadOrders()">Refresh</button>
-
     <button class="secondary" onclick="logout()">Logout</button>
-
-    <a href="create-order.html">
-      <button>Create Order</button>
-    </a>
-
   </div>
 
   <div id="orders"></div>
@@ -178,13 +168,13 @@
   <div class="modal-backdrop"></div>
 
   <div class="modal">
-    <h2>Complete step</h2>
+    <h2>End step</h2>
     <p>Enter completed quantity</p>
 
     <input id="quantityInput" type="number" min="0" />
 
     <div class="modal-actions">
-      <button onclick="confirmQuantity()">Confirm</button>
+      <button onclick="confirmEndStep()">Confirm</button>
       <button class="secondary" onclick="closeModal()">Cancel</button>
     </div>
   </div>
@@ -192,15 +182,16 @@
 
 <script>
   const token = localStorage.getItem("token");
+  const API = "/orders-v2";
+
+  const AUTH_HEADER = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json"
+  };
 
   if (!token) {
     window.location.href = "/login.html";
   }
-
-  document.getElementById("allOrdersBtn")
-    .addEventListener("click", () => {
-      window.location.href = "/all-orders.html";
-    });
 
   let currentOrderNumber = null;
 
@@ -215,17 +206,25 @@
     currentOrderNumber = null;
   }
 
-  async function confirmQuantity() {
+  // START STEP
+  async function startStep(orderNumber) {
+    await fetch(`${API}/${orderNumber}/start`, {
+      method: "POST",
+      headers: AUTH_HEADER
+    });
+
+    loadOrders();
+  }
+
+  // END STEP
+  async function confirmEndStep() {
     const quantity = document.getElementById("quantityInput").value;
 
     if (!quantity || quantity <= 0) return;
 
-    await fetch(`/orders/${currentOrderNumber}/nextStep`, {
+    await fetch(`${API}/${currentOrderNumber}/end`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
+      headers: AUTH_HEADER,
       body: JSON.stringify({
         stepQuantities: Number(quantity)
       })
@@ -236,7 +235,7 @@
   }
 
   async function loadOrders() {
-    const res = await fetch("/orders/my", {
+    const res = await fetch(`${API}/my`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -248,9 +247,13 @@
     container.innerHTML = "";
 
     orders.forEach(order => {
+
+      const activeStep = order.activeStep ?? "DONE";
+
       const div = document.createElement("div");
       div.className = "order-card";
 
+      // CLICK NA ORDER → DETAILS
       div.onclick = () => {
         window.location.href = `/order.html?orderNumber=${order.order_number}`;
       };
@@ -261,19 +264,18 @@
         </div>
 
         <div class="steps">
-          Customer: ${order.customer ?? "none"}<br>
-          Quantity: ${order.quantity ?? "none"}<br>
-          Pages: ${order.number_of_pages ?? "none"}<br><br>
+          Product: ${order.product_type ?? "none"}<br>
+          Status: ${activeStep}<br><br>
 
-          Steps: ${
-            order.completed_steps.length
-              ? order.completed_steps.join(", ")
-              : "none"
-          }
+          State: ${JSON.stringify(order.state ?? {}, null, 2)}
         </div>
 
+        <button onclick="event.stopPropagation(); startStep(${order.order_number})">
+          START
+        </button>
+
         <button onclick="event.stopPropagation(); openModal(${order.order_number})">
-          Complete step
+          END
         </button>
       `;
 

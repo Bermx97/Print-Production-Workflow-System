@@ -1,5 +1,5 @@
-import { startStepV2, endStepV2, getOrdersV2 } from '../orders-v2/controller'
 import { isAuthenticated } from '../../../middlewares/isAuthenticated';
+import { startStepV2, endStepV2, getOrdersV2 } from './controller/controller';
 
 import express from 'express';
 

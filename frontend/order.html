@@ -74,7 +74,8 @@
   </div>
 
   <button onclick="goBack()">Back</button>
-  <button onclick="nextStep()">Next Step</button>
+  <button onclick="startStep()">Start Step</button>
+  <button onclick="endStep()">End Step</button>
 
 </div>
 
@@ -85,81 +86,132 @@
     window.location.href = "/login.html";
   }
 
+  const OLD_API = "/orders";
+  const V2_API = "/orders-v2";
+
   const params = new URLSearchParams(window.location.search);
   const orderNumber = params.get("orderNumber");
 
   const card = document.getElementById("orderCard");
 
+  function safe(val) {
+    if (val === 0) return 0;
+    if (val === null || val === undefined) return "-";
+    return val;
+  }
+
+  // =========================
+  // LOAD (OLD + V2 MERGE)
+  // =========================
   async function loadOrder() {
     try {
-      const res = await fetch(`/orders/${orderNumber}`, {
+      // OLD DATA (business data)
+      const resOld = await fetch(`${OLD_API}/${orderNumber}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to load order");
+      if (!resOld.ok) throw new Error("Failed to load order");
+
+      const order = await resOld.json();
+
+      // V2 DATA (workflow)
+      const resV2 = await fetch(`${V2_API}/${orderNumber}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      let v2 = null;
+      if (resV2.ok) {
+        v2 = await resV2.json();
       }
 
-      const order = await res.json();
-      const workflow = order.workflow ?? [];
+      const state = v2?.state ?? {};
+      const workflow = Object.keys(state);
+
+      const pages = order.number_of_pages ?? "-";
+      const quantity = order.quantity ?? "-";
 
       card.innerHTML = `
         <div class="label">Order</div>
         <div class="value">${order.order_number}</div>
 
         <div class="label">Product</div>
-        <div class="value">${order.product_type}</div>
+        <div class="value">${safe(order.product_type)}</div>
 
         <div class="label">Customer</div>
-        <div class="value">${order.customer ?? "none"}</div>
+        <div class="value">${safe(order.customer)}</div>
+
+        <div class="label">Pages</div>
+        <div class="value">${pages}</div>
+
+        <div class="label">Quantity</div>
+        <div class="value">${quantity}</div>
 
         <div class="label">Due date</div>
-        <div class="value">${new Date(order.due_date).toLocaleDateString()}</div>
+        <div class="value">
+          ${order.due_date ? new Date(order.due_date).toLocaleDateString() : "-"}
+        </div>
 
         <div class="label">Workflow</div>
         <div class="value">
           ${
             workflow.length
               ? workflow.map(step => {
-                  const done = order.completed_steps?.includes(step);
-                  const qty = order.step_quantities?.[step];
+                  const value = state?.[step];
 
-                  return `
-                    ${done ? "✔" : "⏳"} ${step} — ${qty ?? "-"}
-                  `;
+                  const icon =
+                    value === "done" || value === true
+                      ? "✔"
+                      : "⏳";
+
+                  return `${icon} ${step} — ${safe(value)}`;
                 }).join("<br>")
-              : "no workflow"
+              : `
+                ⏳ printing — -<br>
+                ⏳ folding — -<br>
+                ⏳ sewing — -<br>
+                ⏳ case_making — -<br>
+                ⏳ hardcover_binding — -
+              `
           }
         </div>
       `;
 
     } catch (err) {
-      card.innerHTML = `<div class="value">Error loading order</div>`;
       console.error(err);
+      card.innerHTML = `<div class="value">Error loading order</div>`;
     }
   }
 
-  async function nextStep() {
-    try {
-      const res = await fetch(`/orders/${orderNumber}/nextStep`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      if (!res.ok) {
-        alert("Cannot move to next step");
-        return;
+  // =========================
+  // V2 START
+  // =========================
+  async function startStep() {
+    await fetch(`${V2_API}/${orderNumber}/start`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`
       }
+    });
 
-      loadOrder();
+    loadOrder();
+  }
 
-    } catch (err) {
-      console.error(err);
-    }
+  // =========================
+  // V2 END
+  // =========================
+  async function endStep() {
+    await fetch(`${V2_API}/${orderNumber}/end`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    loadOrder();
   }
 
   function goBack() {
