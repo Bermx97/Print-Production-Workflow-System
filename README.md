@@ -3,52 +3,98 @@
 ## Status
 Project in progress (WIP)
 
-Core logic works partially, some edge cases and improvements pending.
+Core workflow system is functional, but still evolving and being refactored.
+
+Current state:
+- Workflow engine (start/end step logic) implemented
+- Role-based access control integrated with workflow steps
+- Step logging system active (event sourcing style)
+- Order state builder (`buildState`) introduced for deriving current status
+- Initial integration tests for workflow transitions added
 
 Known limitations:
-- workflow edge cases not fully tested
-- role system may still be adjusted
+- some workflow edge cases still require extended testing
+- role-to-step mapping may still be adjusted
+- step completion validation logic is being refined
+- API structure is partially duplicated (v1/v2 transitional state)
 
- Some parts of workflow logic are experimental
+Some parts of workflow logic are still being stabilized.
 
-A backend REST API for managing production orders with role-based access control and a structured workflow system.
+---
 
-The system is designed for production environments (e.g. printing pipelines), where orders move through predefined stages and only specific roles can advance them.
+## Overview
+
+A backend REST API for managing production orders with a structured workflow engine and role-based access control.
+
+The system is designed for production environments (e.g. printing / manufacturing pipelines), where orders move through predefined stages and only specific roles can execute or complete specific steps.
+
+Workflow is event-driven and based on step logs rather than direct state mutation.
 
 ---
 
 ## Features
 
 - Create and manage orders
-- Structured status workflow system
-- Role-based access control (RBAC)
-- Protected status transitions
-- Fetch orders by status
-- Single order retrieval
-- Clean separation of business logic (controllers/services)
+- Workflow engine with step transitions (START / END)
+- Event-based step tracking (`step_logs`)
+- Derived order state (`buildState`)
+- Role-based access control (RBAC per step)
+- Step dependency validation
+- Fetch orders (filtered and full views)
+- Single order detail view
+- Integration tests for workflow transitions and authorization
+- Separation of business logic into services (controller/service split)
 
 ---
 
 ## Workflow
 
-Each order follows a linear production flow:
+Each product type follows a predefined step graph.
 
-printing → cutting → gluing → done
+Example:
+
+hardcover_book:
+printing → folding → (sewing || case_making) → hardcover_binding
+
+perfect_bound_book:
+printing → folding_with_milling → binding
+
+saddle_stitching:
+printing → folding → stitching
+
+Each step can have dependencies defined in workflow configuration.
 
 ---
 
 ## Role Permissions
 
-Only specific roles are allowed to advance order status:
+Each role has access to specific steps:
 
-- printer → printing
-- cutter → cutting
-- gluer → gluing
-- admin → full access
+- printer_operator → printing
+- folding_operator → folding / folding_with_milling
+- sewing_operator → sewing
+- case_maker → case_making
+- hardcover_binder_operator → hardcover_binding
+- perfect_bound_operator → binding
+- stitching_operator → stitching
 
-If a user tries to perform an invalid transition, the API returns:
+Admin / technologist / seller:
+- full access to all steps
 
-- 403 Forbidden
+Invalid step access returns:
+- 409 Conflict or 403 Forbidden (depending on validation layer)
+
+---
+
+## Architecture Notes
+
+- `step_logs` → event history (START / END)
+- `buildState()` → derives current step state from logs
+- `workflow config` → defines dependencies between steps
+
+Current direction:
+- moving from controller-heavy logic → service-based workflow engine
+- increasing test coverage for transitions and role enforcement
 
 ---
 
@@ -59,7 +105,16 @@ If a user tries to perform an invalid transition, the API returns:
 - TypeScript
 - Prisma ORM
 - PostgreSQL (NeonDB)
-- JWT (authentication & authorization)
-- bcrypt (password hashing)
-- express-validator (input validation)
-- Supertest (API testing)
+- JWT authentication
+- bcrypt
+- express-validator
+- Supertest (integration testing)
+
+## Database Schema:
+
+
+<img width="968" height="688" alt="Untitled" src="https://github.com/user-attachments/assets/3e38de31-46c1-4395-9cad-7ef25e174f7d" />
+<img width="299" height="879" alt="image" src="https://github.com/user-attachments/assets/762828d4-d287-47d8-ab42-12c3d5e2ed93" />
+<img width="261" height="325" alt="image" src="https://github.com/user-attachments/assets/326886e1-120c-4f81-b9d9-3e94878ee1e2" />
+
+
