@@ -1,5 +1,5 @@
-import { OrderStatusV2 } from "../../../../types/orderStatus-V2";
-import { HttpError } from "../../../../utils/errors";
+import { OrderStatusV2 } from "../../../types/orderStatus-V2";
+import { HttpError } from "../../../utils/errors";
 import { assertRoleCanAccessStep } from "../domain/roleGuard";
 
 export const handleStart = async (ctx: {

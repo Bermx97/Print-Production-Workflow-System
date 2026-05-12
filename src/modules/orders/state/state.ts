@@ -1,4 +1,4 @@
-import { WorkflowV2, OrderStateV2, OrderStatusV2 } from "../../../../types/orderStatus-V2";
+import { WorkflowV2, OrderStateV2, OrderStatusV2 } from "../../../types/orderStatus-V2";
 
 export const buildState = (
   logs: any[],

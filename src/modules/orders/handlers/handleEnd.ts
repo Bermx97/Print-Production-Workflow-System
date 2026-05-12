@@ -1,6 +1,6 @@
-import { OrderStatusV2, OrderStateV2 } from "../../../../types/orderStatus-V2";
+import { OrderStatusV2, OrderStateV2 } from "../../../types/orderStatus-V2";
 import { assertRoleCanAccessStep } from "../domain/roleGuard";
-import { HttpError } from "../../../../utils/errors";
+import { HttpError } from "../../../utils/errors";
 import { canEndStep } from "../domain/canEndStep";
 
 export const handleEnd = async (ctx: {
@@ -35,7 +35,7 @@ export const handleEnd = async (ctx: {
     throw new HttpError('Cannot end step before dependencies are DONE', 409);
   }
 
-  return tx.step_logs.create({
+  await tx.step_logs.create({
     data: {
       order_id: order.id,
       employee: userId,
