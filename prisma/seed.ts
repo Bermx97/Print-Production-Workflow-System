@@ -163,12 +163,17 @@ for (const order of orders) {
 
     // ✔ DONE steps (before progress)
     if (i < progress) {
+      const start = new Date()
+      const end = new Date(
+      start.getTime() + getRandomInt(30, 320) * 60000
+    );
 
       await prisma.step_logs.create({
         data: {
           order_id: order.id,
           employee: employee.id,
           step_name: step as any,
+          created_at: start,
           event_type: 'START'
         }
       });
@@ -178,6 +183,7 @@ for (const order of orders) {
           order_id: order.id,
           employee: employee.id,
           step_name: step as any,
+          created_at: end,
           event_type: 'END'
         }
       });

@@ -44,6 +44,7 @@
       border: 1px solid #222;
       
     }
+
     button {
       background: #ff2a2a;
       border: none;
@@ -61,7 +62,6 @@
       background: #c90000;
     }
 
-
   </style>
 </head>
 
@@ -69,9 +69,9 @@
 <div class="container">
   <h1>ORDER DETAILS</h1>
 
-      <button class="my_orders" onclick="window.location.href='/index.html'">
-      My Orders
-    </button>
+  <button class="my_orders" onclick="window.location.href='/index.html'">
+    My Orders
+  </button>
 
   <div class="card" id="card">Loading...</div>
 </div>
@@ -110,6 +110,12 @@ async function loadOrder() {
 
   const order = await res.json();
 
+  const analyticsRes = await fetch(`/orders/${orderNumber}/analytics`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const analytics = await analyticsRes.json();
+
   const logs = order.step_logs || [];
   const workflow = order.workflow || [];
   const quantities = order.step_quantities || {};
@@ -142,15 +148,30 @@ async function loadOrder() {
 
         let icon = "⏳";
         let color = "#94a3b8";
-        if (status === "ACTIVE") {icon = "🟡"; color = "#ffcc00";}
-        if (status === "DONE") {icon = "✔"; color = "#4caf50";}
+
+        if (status === "ACTIVE") {
+          icon = "🟡";
+          color = "#ffcc00";
+        }
+
+        if (status === "DONE") {
+          icon = "✔";
+          color = "#4caf50";
+        }
+
+        const speedData = analytics.speeds?.find(
+          s => s.step === step
+        );
 
         return `
           <div class="step">
             <span style="color:${color}">
-            ${icon} ${step}<br>
+              ${icon} ${step}<br>
             </span>
-            ${step} quantity: ${quantities[step]  ?? "-"}
+
+            ${step} quantity: ${quantities[step] ?? "-"}
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            ${step} speed:${speedData?.speed?.toFixed(2) ?? "-"}/h
           </div>
         `;
       }).join("")}
