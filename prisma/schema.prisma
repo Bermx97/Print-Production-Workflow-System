@@ -10,7 +10,6 @@ datasource db {
 model order {
   id           String       @id @default(uuid())
   order_number Int          @unique
-  completed_steps String[]
   due_date     DateTime
   created_by   String
   createdBy    employee     @relation("CreatedOrders", fields: [created_by], references: [id])

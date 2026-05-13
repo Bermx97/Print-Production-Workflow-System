@@ -10,9 +10,10 @@ export const handleEnd = async (ctx: {
   role: any;
   state: OrderStateV2;
   wf: Record<string, any>;
+  stepQuantity: number;
 }) => {
 
-  const { tx, order, userId, role, state, wf } = ctx;
+  const { tx, order, userId, role, state, wf, stepQuantity } = ctx;
   const activeStep = (Object.keys(wf) as OrderStatusV2[]).find(step => {
 
     if (state[step] !== 'ACTIVE') {
@@ -35,7 +36,17 @@ export const handleEnd = async (ctx: {
     throw new HttpError('Cannot end step before dependencies are DONE', 409);
   }
 
-  await tx.step_logs.create({
+  const quantity = Number(stepQuantity);
+
+  const existingQuantities: Record<string, number> =
+    (order.step_quantities as Record<string, number>) ?? {};
+
+  const updatedQuantities: Record<string, number> = {
+    ...existingQuantities,
+    [activeStep]: quantity
+  };
+
+  const endLog = await tx.step_logs.create({
     data: {
       order_id: order.id,
       employee: userId,
@@ -43,4 +54,11 @@ export const handleEnd = async (ctx: {
       event_type: 'END'
     }
   });
+
+  const addStepQuantities = await tx.order.update({
+    where: { id: order.id },
+    data: { step_quantities: updatedQuantities }
+  });
+
+  return { endLog, addStepQuantities }
 };

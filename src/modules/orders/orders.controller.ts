@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createOrderService, getOrdersService, getOrderService, getMyOrdersService, nextStepService, createStepLogService, createStepEventV2 } from './orders.service';
+import { createOrderService, getAllOrdersService, getOrderService, getMyOrdersService, createStepEventV2 } from './orders.service';
 import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
 import { workflow, roleStatusMap, getWorkflow } from './orders.workflow';
@@ -7,7 +7,7 @@ import { buildState } from './state/state';
 import { canStartStep } from './domain/canStartStep';
 
 export const getOrders = async (req: Request, res: Response) => {
-  const orders = await getOrdersService();
+  const orders = await getAllOrdersService();
   return res.status(200).json(orders);
 };
 
@@ -49,25 +49,6 @@ export const createOrder = async (req: Request, res: Response) => {
   const result = await createOrderService(data);
   res.status(201).json({ message: `Order ${orderNumber} created`, order: result });
 };
-/*
-export const nextStep = async (req: Request, res: Response) => {
-  const { orderNumber } = req.params;
-  const { stepQuantities } = req.body;
-  const { id, role } = req.user
-
-  const result = await nextStepService(Number(orderNumber), role, id, stepQuantities);
-
-  return res.status(200).json(result);
-}; */
-/*
-export const createStepLog = async (req: Request, res: Response) => {
-  const { orderNumber } = req.params;
-  const {stepName, eventType } = req.body
-  const { id } = req.user;
-
-  const result = await createStepLogService(Number(orderNumber), id, eventType, stepName)
-}*/
-
 
 export const startStepV2 = async (req: Request, res: Response) => {
 
@@ -83,12 +64,15 @@ export const startStepV2 = async (req: Request, res: Response) => {
 };
 
 export const endStepV2 = async (req: Request, res: Response) => {
+  const  { stepQuantity } = req.body
+
   const result =
     await createStepEventV2(
       Number(req.params.orderNumber),
       req.user.id,
       req.user.role,
-      'END'
+      'END',
+      stepQuantity
     );
 
   return res.json(result);

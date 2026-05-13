@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>My Orders V2.1</title>
+  <title>My Orders</title>
 
   <style>
     body {
@@ -152,11 +152,26 @@
 
 <div class="container">
 
-  <h1>MY ORDERS (V2.1)</h1>
+  <h1>MY ORDERS</h1>
 
   <div class="top-bar">
-    <button class="secondary" onclick="loadOrders()">Refresh</button>
-    <button class="secondary" onclick="logout()">Logout</button>
+
+    <button onclick="window.location.href='/create-order.html'">
+      Create Order
+    </button>
+
+    <button class="secondary" onclick="window.location.href='/all-orders.html'">
+      All Orders
+    </button>
+
+    <button class="secondary" onclick="loadOrders()">
+      Refresh
+    </button>
+
+    <button class="secondary" onclick="logout()">
+      Logout
+    </button>
+
   </div>
 
   <div id="orders"></div>
@@ -182,7 +197,7 @@
 
 <script>
   const token = localStorage.getItem("token");
-  const API = "/orders-v2";
+  const API = "/orders";
 
   const AUTH_HEADER = {
     Authorization: `Bearer ${token}`,
@@ -206,7 +221,6 @@
     currentOrderNumber = null;
   }
 
-  // START STEP
   async function startStep(orderNumber) {
     await fetch(`${API}/${orderNumber}/start`, {
       method: "POST",
@@ -216,7 +230,6 @@
     loadOrders();
   }
 
-  // END STEP
   async function confirmEndStep() {
     const quantity = document.getElementById("quantityInput").value;
 
@@ -226,7 +239,7 @@
       method: "POST",
       headers: AUTH_HEADER,
       body: JSON.stringify({
-        stepQuantities: Number(quantity)
+        stepQuantity: Number(quantity)
       })
     });
 
@@ -248,12 +261,9 @@
 
     orders.forEach(order => {
 
-      const activeStep = order.activeStep ?? "DONE";
-
       const div = document.createElement("div");
       div.className = "order-card";
 
-      // CLICK NA ORDER → DETAILS
       div.onclick = () => {
         window.location.href = `/order.html?orderNumber=${order.order_number}`;
       };
@@ -264,10 +274,34 @@
         </div>
 
         <div class="steps">
+          Customer: ${order.customer ?? "none"}<br>
           Product: ${order.product_type ?? "none"}<br>
-          Status: ${activeStep}<br><br>
+          Quantity: ${order.quantity ?? "none"}<br>
 
-          State: ${JSON.stringify(order.state ?? {}, null, 2)}
+          
+          ${Object.entries(order.state ?? {}).map(([step, status]) => {
+            let icon = "⚪";
+            let color = "#94a3b8";
+
+            if (status === "ACTIVE") {
+              icon = "🟡";
+              color = "#ffcc00";
+            }
+
+            if (status === "DONE") {
+              icon = "✔";
+              color = "#4caf50";
+            }
+
+            return `
+              <div style="margin-bottom:4px;">
+                <span style="color:${color}; font-size:17px;">
+                  ${icon} ${step} 
+                </span>
+              </div>
+            `;
+          }).join("")}
+
         </div>
 
         <button onclick="event.stopPropagation(); startStep(${order.order_number})">

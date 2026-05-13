@@ -1,7 +1,6 @@
 import { order, product_type } from '@prisma/client';
 import { getAuthToken } from './auth';
 import prisma from '../../src/lib/prisma'
-type orderSteps = order['completed_steps']
 
 export function getRandomQuantity() {
   const min = 400;
@@ -27,7 +26,7 @@ const clients = [
   'Scandinavian Print Co',
   'Nordic Books Ltd',
   'Arctic Press',
-  'Nova Publishing',
+  'Nova Publishing', 
   'Capital Print Studio',
   'Blue Ocean Media'
 ];
@@ -35,12 +34,12 @@ const clients = [
 export function getRandomClient() {
   return clients[Math.floor(Math.random() * clients.length)];
 }
-
-export const createOrder = async (productType: product_type, completedSteps: orderSteps = []) => {
+//to dozmiany bo nie będzie stepów
+export const createOrder = async (productType: product_type) => {
     const user = await getAuthToken();
     const orderNumber = Number(`${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100)}`)
 
-    const data = { order_number: orderNumber, due_date: new Date('2026-08-01'), created_by: user.user.id, product_type: productType, completed_steps: completedSteps, quantity: getRandomQuantity(), customer: getRandomClient(), number_of_pages: getRandomEvenPages() };
+    const data = { order_number: orderNumber, due_date: new Date('2026-08-01'), created_by: user.user.id, product_type: productType, quantity: getRandomQuantity(), customer: getRandomClient(), number_of_pages: getRandomEvenPages() };
 
     const order = await prisma.order.create({data});
     return order;

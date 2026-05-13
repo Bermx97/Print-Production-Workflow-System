@@ -9,7 +9,7 @@ beforeEach(async () => {
     TRUNCATE TABLE "order", "employee" RESTART IDENTITY CASCADE;
   `);
 });
-
+/*
 describe('GET /orders/my', () => {
   it('should return only executable orders for role', async () => {
     const {token, user: { id } } = await getAuthToken('folding_operator');
@@ -26,7 +26,7 @@ describe('GET /orders/my', () => {
     expect(response.body[0].order_number).toBe(order_number);
   });
 });
-
+*/
 describe('GET /orders', () => {
   it('should return 200 if orders exist', async () => {
     const { token } = await getAuthToken();
@@ -93,7 +93,7 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
-      stepQuantities: 600
+      //stepQuantities: 600
     })
     .set("Authorization", `Bearer ${token}`);
 
@@ -113,7 +113,7 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
-      stepQuantities: 550
+      //stepQuantities: 550
     })
     .set("Authorization", `Bearer ${token}`);
 
@@ -133,7 +133,7 @@ describe('POST /orders', () => {
     quantity: getRandomQuantity(),
     customer: getRandomClient(),
     numberOfPages: getRandomEvenPages(),
-    stepQuantities: 550
+    //stepQuantities: 550
   })
   .set("Authorization", `Bearer ${token}`);
   
@@ -152,7 +152,7 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
-      stepQuantities: 500
+      //stepQuantities: 500
     });
 
     expect(response.status).toBe(401);

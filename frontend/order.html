@@ -14,211 +14,151 @@
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       padding: 30px;
     }
 
     h1 {
       color: #ff2a2a;
-      margin-bottom: 20px;
     }
 
     .card {
       background: #141414;
-      border-left: 4px solid #ff2a2a;
       padding: 20px;
+      border-left: 4px solid #ff2a2a;
       border-radius: 8px;
-
       display: grid;
-      grid-template-columns: 150px 1fr;
-      row-gap: 12px;
-      column-gap: 15px;
+      grid-template-columns: 180px 1fr;
+      gap: 10px;
     }
 
-    .label {
-      color: #ff2a2a;
-      font-weight: bold;
-    }
+    .label { color: #ff2a2a; font-weight: bold; }
+    .value { color: #fff; }
 
-    .value {
-      color: #fff;
+    .step {
+      background: #1a1a1a;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #222;
+      
     }
-
     button {
       background: #ff2a2a;
       border: none;
       padding: 10px 14px;
       color: white;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: bold;
-      margin-top: 15px;
-      margin-right: 10px;
+      transition: 0.2s;
+      font-size: 14px;
+      margin-bottom: 12px;
     }
 
     button:hover {
       background: #c90000;
     }
+
+
   </style>
 </head>
 
 <body>
-
 <div class="container">
-
   <h1>ORDER DETAILS</h1>
 
-  <div class="card" id="orderCard">
-    Loading...
-  </div>
+      <button class="my_orders" onclick="window.location.href='/index.html'">
+      My Orders
+    </button>
 
-  <button onclick="goBack()">Back</button>
-  <button onclick="startStep()">Start Step</button>
-  <button onclick="endStep()">End Step</button>
-
+  <div class="card" id="card">Loading...</div>
 </div>
 
 <script>
-  const token = localStorage.getItem("token");
+const token = localStorage.getItem("token");
+const params = new URLSearchParams(window.location.search);
+const orderNumber = params.get("orderNumber");
 
-  if (!token) {
-    window.location.href = "/login.html";
-  }
+if (!token) window.location.href = "/login.html";
 
-  const OLD_API = "/orders";
-  const V2_API = "/orders-v2";
+function buildStateFromLogs(logs, workflow) {
+  const state = {};
 
-  const params = new URLSearchParams(window.location.search);
-  const orderNumber = params.get("orderNumber");
+  workflow.forEach(step => {
+    const hasStart = logs.some(l =>
+      l.step_name === step && l.event_type === "START"
+    );
 
-  const card = document.getElementById("orderCard");
+    const hasEnd = logs.some(l =>
+      l.step_name === step && l.event_type === "END"
+    );
 
-  function safe(val) {
-    if (val === 0) return 0;
-    if (val === null || val === undefined) return "-";
-    return val;
-  }
+    if (hasEnd) state[step] = "DONE";
+    else if (hasStart) state[step] = "ACTIVE";
+    else state[step] = "NOT_STARTED";
+  });
 
-  // =========================
-  // LOAD (OLD + V2 MERGE)
-  // =========================
-  async function loadOrder() {
-    try {
-      // OLD DATA (business data)
-      const resOld = await fetch(`${OLD_API}/${orderNumber}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+  return state;
+}
 
-      if (!resOld.ok) throw new Error("Failed to load order");
+async function loadOrder() {
+  const res = await fetch(`/orders/${orderNumber}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
 
-      const order = await resOld.json();
+  const order = await res.json();
 
-      // V2 DATA (workflow)
-      const resV2 = await fetch(`${V2_API}/${orderNumber}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+  const logs = order.step_logs || [];
+  const workflow = order.workflow || [];
+  const quantities = order.step_quantities || {};
 
-      let v2 = null;
-      if (resV2.ok) {
-        v2 = await resV2.json();
-      }
+  const state = buildStateFromLogs(logs, workflow);
 
-      const state = v2?.state ?? {};
-      const workflow = Object.keys(state);
+  const card = document.getElementById("card");
 
-      const pages = order.number_of_pages ?? "-";
-      const quantity = order.quantity ?? "-";
+  card.innerHTML = `
+    <div class="label">Order number:</div>
+    <div class="value"># ${order.order_number}</div>
 
-      card.innerHTML = `
-        <div class="label">Order</div>
-        <div class="value">${order.order_number}</div>
+    <div class="label">Customer:</div>
+    <div class="value">${order.customer ?? "-"}</div>
 
-        <div class="label">Product</div>
-        <div class="value">${safe(order.product_type)}</div>
+    <div class="label">Product:</div>
+    <div class="value">${order.product_type}</div>
 
-        <div class="label">Customer</div>
-        <div class="value">${safe(order.customer)}</div>
+    <div class="label">Pages:</div>
+    <div class="value">${order.number_of_pages ?? "-"}</div>
 
-        <div class="label">Pages</div>
-        <div class="value">${pages}</div>
+    <div class="label">Quantity:</div>
+    <div class="value">${order.quantity ?? "-"}</div>
 
-        <div class="label">Quantity</div>
-        <div class="value">${quantity}</div>
+    <div class="label">Workflow</div>
+    <div class="value">
+      ${workflow.map(step => {
 
-        <div class="label">Due date</div>
-        <div class="value">
-          ${order.due_date ? new Date(order.due_date).toLocaleDateString() : "-"}
-        </div>
+        const status = state[step];
 
-        <div class="label">Workflow</div>
-        <div class="value">
-          ${
-            workflow.length
-              ? workflow.map(step => {
-                  const value = state?.[step];
+        let icon = "⏳";
+        let color = "#94a3b8";
+        if (status === "ACTIVE") {icon = "🟡"; color = "#ffcc00";}
+        if (status === "DONE") {icon = "✔"; color = "#4caf50";}
 
-                  const icon =
-                    value === "done" || value === true
-                      ? "✔"
-                      : "⏳";
+        return `
+          <div class="step">
+            <span style="color:${color}">
+            ${icon} ${step}<br>
+            </span>
+            ${step} quantity: ${quantities[step]  ?? "-"}
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
 
-                  return `${icon} ${step} — ${safe(value)}`;
-                }).join("<br>")
-              : `
-                ⏳ printing — -<br>
-                ⏳ folding — -<br>
-                ⏳ sewing — -<br>
-                ⏳ case_making — -<br>
-                ⏳ hardcover_binding — -
-              `
-          }
-        </div>
-      `;
-
-    } catch (err) {
-      console.error(err);
-      card.innerHTML = `<div class="value">Error loading order</div>`;
-    }
-  }
-
-  // =========================
-  // V2 START
-  // =========================
-  async function startStep() {
-    await fetch(`${V2_API}/${orderNumber}/start`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    loadOrder();
-  }
-
-  // =========================
-  // V2 END
-  // =========================
-  async function endStep() {
-    await fetch(`${V2_API}/${orderNumber}/end`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    loadOrder();
-  }
-
-  function goBack() {
-    window.location.href = "/all-orders.html";
-  }
-
-  loadOrder();
+loadOrder();
 </script>
 
 </body>
