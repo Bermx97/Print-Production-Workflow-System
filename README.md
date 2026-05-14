@@ -1,5 +1,9 @@
 # Order Management API
 
+## Demo 
+
+https://github.com/user-attachments/assets/74de255e-0d52-4dcf-a6a0-46cb25a3b142
+
 ## Status
 Project in progress (WIP)
 
@@ -11,6 +15,9 @@ Current state:
 - Step logging system active (event sourcing style)
 - Order state builder (`buildState`) introduced for deriving current status
 - Initial integration tests for workflow transitions added
+- Step speed / analytics layer introduced (performance per step based on logs)
+- Order UI expanded with step visualization in frontend views
+- Order search endpoint added for direct lookup by order number
 
 Known limitations:
 - some workflow edge cases still require extended testing
@@ -42,7 +49,11 @@ Workflow is event-driven and based on step logs rather than direct state mutatio
 - Step dependency validation
 - Fetch orders (filtered and full views)
 - Single order detail view
+- Single order detail view
+- Order search by order number
+- Step performance analytics (speed per step)
 - Integration tests for workflow transitions and authorization
+- Frontend UI for order tracking with live step status
 - Separation of business logic into services (controller/service split)
 
 ---
@@ -91,6 +102,8 @@ Invalid step access returns:
 - `step_logs` → event history (START / END)
 - `buildState()` → derives current step state from logs
 - `workflow config` → defines dependencies between steps
+- `analytics service` → computes step duration and speed based on timestamps
+- frontend derives UI state from backend logs (no hard state stored)
 
 Current direction:
 - moving from controller-heavy logic → service-based workflow engine
