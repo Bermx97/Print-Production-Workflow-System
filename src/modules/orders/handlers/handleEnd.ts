@@ -3,6 +3,7 @@ import { assertRoleCanAccessStep } from "../domain/roleGuard";
 import { HttpError } from "../../../utils/errors";
 import { canEndStep } from "../domain/canEndStep";
 
+
 export const handleEnd = async (ctx: {
   tx: any;
   order: any;
@@ -32,8 +33,10 @@ export const handleEnd = async (ctx: {
     throw new HttpError('No active step', 409);
   }
 
+  const deps = wf[activeStep] ?? [];
+
   if (!canEndStep(activeStep, state, wf)) {
-    throw new HttpError('Cannot end step before dependencies are DONE', 409);
+    throw new HttpError(` Cannot end. Blocked by: ${deps}`, 409);
   }
 
   const quantity = Number(stepQuantity);

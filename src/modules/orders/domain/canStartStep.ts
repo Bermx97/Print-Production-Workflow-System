@@ -3,19 +3,14 @@ import { OrderStatusV2, OrderStateV2, WorkflowV2 } from '../../../types/orderSta
 
 export const canStartStep = (step: OrderStatusV2, state: OrderStateV2 , wf: WorkflowV2[keyof WorkflowV2]) => {
 
-  if (state[step] === 'ACTIVE') {
-    return false;
-  }
-
-  if (state[step] === 'DONE') {
+  if (
+    state[step] === 'ACTIVE' ||
+    state[step] === 'DONE'
+  ) {
     return false;
   }
 
   const deps = wf[step] ?? [];
-
-  if (deps.length === 0) {
-    return true;
-  }
 
   return deps.every(dep => {
 

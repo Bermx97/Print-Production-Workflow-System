@@ -62,12 +62,6 @@
       background: #1c1c1c;
     }
 
-    hr {
-      border: none;
-      border-top: 1px solid #333;
-      margin-top: 10px;
-    }
-
     .label {
       color: #ff2a2a;
       font-weight: bold;
@@ -114,6 +108,7 @@
       ordersList.innerHTML = "";
 
       orders.forEach(order => {
+
         const li = document.createElement("li");
 
         li.innerHTML = `
@@ -123,11 +118,6 @@
           <div><span class="label">Quantity:</span> ${order.quantity ?? "none"}</div>
           <div><span class="label">Pages:</span> ${order.number_of_pages ?? "none"}</div>
           <div><span class="label">Due:</span> ${new Date(order.due_date).toLocaleDateString()}</div>
-          <div><span class="label">Steps:</span> ${
-            order.completed_steps?.length
-              ? order.completed_steps.join(", ")
-              : "none"
-          }</div>
         `;
 
         li.addEventListener("click", () => {

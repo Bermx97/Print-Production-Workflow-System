@@ -93,12 +93,11 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
-      //stepQuantities: 600
     })
     .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Order number must be a number');
+    expect(response.body.message).toBe('Invalid order number');
 });
 
   it('should return 400 if the date is not a date', async () => {
@@ -113,7 +112,6 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
-      //stepQuantities: 550
     })
     .set("Authorization", `Bearer ${token}`);
 
@@ -133,7 +131,6 @@ describe('POST /orders', () => {
     quantity: getRandomQuantity(),
     customer: getRandomClient(),
     numberOfPages: getRandomEvenPages(),
-    //stepQuantities: 550
   })
   .set("Authorization", `Bearer ${token}`);
   
@@ -152,7 +149,6 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
-      //stepQuantities: 500
     });
 
     expect(response.status).toBe(401);

@@ -102,7 +102,7 @@ async function seedOrders(employeeId: string) {
 
   const createdOrders = [];
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 250; i++) {
 
     const productType =
       productTypes[getRandomInt(0, productTypes.length - 1)];

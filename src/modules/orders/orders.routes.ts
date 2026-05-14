@@ -23,10 +23,9 @@ router.post('/:orderNumber/end', isAuthenticated,
     body('stepQuantity')
     .notEmpty()
     .withMessage('Step quantity is required')
-    .isInt({ gt: 0 })
-    .withMessage('Step quantity must be greater than 0')
-    .toInt()
-    .withMessage('Step quantity must be a number'),
+    .isInt({ min: 1, max: 1000000 })
+    .withMessage('Step quantity must be between 1 and 1000000')
+    .toInt(),
     endStepV2);
 
 router.post('/', isAuthenticated, canCreateOrder, createOrderValidation, validateRequest, createOrder);

@@ -13,7 +13,7 @@ export const handleStart = async (ctx: {
   const { tx, order, userId, role, availableSteps } = ctx;
 
   if (availableSteps.length === 0) {
-    throw new HttpError('No available step for this role', 409);
+    throw new HttpError('Start already completed or not available anymore', 409);
   }
 
   const nextStep = availableSteps[0];
