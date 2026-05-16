@@ -1,7 +1,7 @@
 import { employee_role } from '@prisma/client';
 import { roleStatusMap } from '../orders.workflow';
 import { HttpError } from '../../../utils/errors';
-import { OrderStatusV2 } from '../../../types/orderStatus-V2';
+import { OrderStatusV2 } from '../../../types/orderStatus';
 
 export const assertRoleCanAccessStep = (
   role: employee_role,

@@ -1,4 +1,4 @@
-import { OrderStatusV2 } from '../../../types/orderStatus-V2';
+import { OrderStatusV2 } from '../../../types/orderStatus';
 import { assertRoleCanAccessStep } from '../domain/roleGuard';
 import { HttpError } from '../../../utils/errors';
 import { stepScope } from '../orders.workflow';
