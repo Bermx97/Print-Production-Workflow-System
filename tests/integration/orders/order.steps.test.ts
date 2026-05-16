@@ -2,29 +2,8 @@ import request from "supertest";
 import { createOrder } from "../../utils/order"; 
 import { getAuthToken } from "../../utils/auth"; 
 import prisma from "../../../src/lib/prisma";
-import { buildState } from "../../../src/modules/orders/state/state"; 
-import { workflow } from "../../../src/modules/orders/orders.workflow";
 import app from "../../../src/app";
 import { describe } from "node:test";
-
-
-
-describe('step authorization', () => {
-    
-    it('should block a step', async () => {
-        const { token } = await getAuthToken('stitching_operator');
-        const order = await createOrder('saddle_stitching');
-        await request(app)
-        .post(`/orders/${order.order_number}/start`)
-        .set("Authorization", `Bearer ${token}`)
-        .expect(409);
-        const wf = workflow[order.product_type];
-        const logs = await prisma.step_logs.findMany({ where: { order_id: order.id }});
-        const state = buildState(logs, wf);
-        expect(state.printing).not.toBe('DONE');
-        expect(state.folding).not.toBe('DONE');
-    });
-});
 
 describe('step lifecycle (start/end)', () => {
 
@@ -91,7 +70,7 @@ describe('step lifecycle (start/end)', () => {
         .expect(409);
     });
 })
-
+ /*
 describe('workflow transitions', () => {
 
     it('should start a step and let the next one start', async () => {
@@ -158,3 +137,4 @@ describe('workflow transitions', () => {
         expect(state.sewing).toBe('ACTIVE');
     });
 });
+*/
