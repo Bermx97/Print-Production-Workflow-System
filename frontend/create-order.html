@@ -59,6 +59,7 @@
       outline: none;
       margin-bottom: 15px;
       font-size: 16px;
+      box-sizing: border-box;
     }
 
     input:focus, select:focus {
@@ -90,6 +91,35 @@
       margin-top: 15px;
       color: #ccc;
       text-align: center;
+    }
+
+    .part-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 15px;
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 10px;
+      align-items: end;
+    }
+
+    .remove-btn {
+      background: #333;
+      height: 44px;
+    }
+
+    .remove-btn:hover {
+      background: #555;
+    }
+
+    #addPartBtn {
+      margin-top: 10px;
+      background: #222;
+    }
+
+    #addPartBtn:hover {
+      background: #333;
     }
   </style>
 </head>
@@ -123,8 +153,6 @@
       </select>
     </div>
 
-    <!-- NOWE POLA -->
-
     <div>
       <label>Customer</label>
       <input type="text" id="customer" />
@@ -141,6 +169,16 @@
     </div>
 
     <div class="full">
+      <label>Order parts</label>
+
+      <div id="partsContainer"></div>
+
+      <button type="button" id="addPartBtn">
+        + Add variant
+      </button>
+    </div>
+
+    <div class="full">
       <button type="submit">Create Order</button>
     </div>
 
@@ -154,6 +192,59 @@
   const form = document.getElementById("orderForm");
   const status = document.getElementById("status");
 
+  const partsContainer = document.getElementById("partsContainer");
+  const addPartBtn = document.getElementById("addPartBtn");
+
+  function createPartRow() {
+    const row = document.createElement("div");
+    row.className = "part-row";
+
+    row.innerHTML = `
+      <div>
+        <label>Signatures</label>
+        <input type="number" class="runs" min="1" value="1" />
+      </div>
+
+      <div>
+        <label>Pages</label>
+        <select class="variant">
+          <option value="V4">4</option>
+          <option value="V8">8</option>
+          <option value="V16">16</option>
+          <option value="V24">24</option>
+          <option value="V32">32</option>
+          <option value="V64">64</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Quantity</label>
+        <input type="number" class="partQuantity" min="1" value="1" />
+      </div>
+
+      <button type="button" class="remove-btn">X</button>
+    `;
+
+    row.querySelector(".remove-btn").addEventListener("click", () => {
+      row.remove();
+    });
+
+    partsContainer.appendChild(row);
+  }
+
+  const MAX_PARTS = 6;
+
+  addPartBtn.addEventListener("click", () => {
+    const count = document.querySelectorAll(".part-row").length;
+
+    if (count >= MAX_PARTS) {
+      status.innerText = "Maximum 6 parts allowed";
+      return;
+    }
+
+    createPartRow();
+  });
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -164,6 +255,16 @@
     const customer = document.getElementById("customer").value;
     const quantity = document.getElementById("quantity").value;
     const numberOfPages = document.getElementById("numberOfPages").value;
+
+    const parts = [];
+
+    document.querySelectorAll(".part-row").forEach(row => {
+      parts.push({
+        variant: row.querySelector(".variant").value,
+        runs: Number(row.querySelector(".runs").value),
+        part_quantity: Number(row.querySelector(".partQuantity").value)
+      });
+    });
 
     try {
       const res = await fetch("http://localhost:3000/orders", {
@@ -178,7 +279,8 @@
           productType,
           customer,
           quantity,
-          numberOfPages
+          numberOfPages,
+          parts
         })
       });
 
@@ -190,6 +292,8 @@
 
       status.innerText = "Order created successfully";
       form.reset();
+      partsContainer.innerHTML = "";
+      createPartRow();
 
     } catch (err) {
       status.innerText = "Error: " + err.message;

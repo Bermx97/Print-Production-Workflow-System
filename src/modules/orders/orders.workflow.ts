@@ -4,8 +4,8 @@ import { OrderStatus, ORDER_STATUSES, ProductType } from '../../types/orderStatu
 
 
 export type RoleAccess =
-  | { type: "ALL" }
-  | { type: "LIMITED"; steps: OrderStatus[] };
+  | { type: 'ALL' }
+  | { type: 'LIMITED'; steps: OrderStatus[] };
 
 
 
@@ -32,6 +32,21 @@ export const workflow: Record< ProductType, Partial<Record<OrderStatus, OrderSta
   }
 };
 
+export const stepScope = {
+  printing: 'per_part',
+  folding: 'per_part',
+  folding_with_milling: 'per_part',
+  sewing: 'aggregated',
+  case_making: 'aggregated',
+  hardcover_binding: 'per_order',
+  binding: 'per_order',
+  stitching: 'per_order'
+} as const;
+
+export const mergeGroups = {
+  post_folding: ['sewing', 'case_making', 'hardcover_binding', 'binding', 'stitching' ]
+};
+
 export const roleStatusMap: Record<employee_role, RoleAccess> = {
   printer_operator: { type: 'LIMITED', steps: ['printing'] },
   folding_operator: { type: 'LIMITED', steps: ['folding_with_milling', 'folding'] },
@@ -40,7 +55,7 @@ export const roleStatusMap: Record<employee_role, RoleAccess> = {
   hardcover_binder_operator: { type:'LIMITED', steps: ['hardcover_binding'] },
   perfect_bound_operator: { type:'LIMITED', steps: ['binding'] },
   stitching_operator: {type: 'LIMITED', steps: ['stitching'] },
-
+  
 
   seller: { type: 'ALL' },
   technologist: { type: 'ALL' },

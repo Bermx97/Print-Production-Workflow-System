@@ -1,6 +1,10 @@
 import { OrderStatus } from '../../types/orderStatus';
 
 export function getStepSpeed(logs: any[], step: OrderStatus, quantity: number) {
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    return null;
+  }
+
   const stepLogs = logs
     .filter(l => l.step_name === step)
     .sort((a, b) =>

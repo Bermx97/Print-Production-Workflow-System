@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 import { employee_role } from '@prisma/client';
 
 export const verifyToken = (token: string) => {

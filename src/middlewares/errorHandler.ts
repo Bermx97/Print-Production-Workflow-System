@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from "express";
-import { HttpError } from "../utils/errors";
+import { Request, Response, NextFunction } from 'express';
+import { HttpError } from '../utils/errors';
 
 const errorHandler = (
   err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -8,7 +8,7 @@ const errorHandler = (
   const status = err instanceof HttpError ? err.status : 500;
   res.status(status).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message: err.message || 'Internal Server Error',
   });
 };
 

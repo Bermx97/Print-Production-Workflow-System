@@ -2,7 +2,7 @@ import express from 'express';
 import { login, registerEmployee } from './auth.controller'
 import { body } from 'express-validator';
 import validateRequest from '../../middlewares/validateRequest';
-import { employee_role } from "@prisma/client";
+import { employee_role } from '@prisma/client';
 
 
 const router = express.Router();

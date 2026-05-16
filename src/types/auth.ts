@@ -1,4 +1,4 @@
-import { employee_role } from "@prisma/client";
+import { employee_role } from '@prisma/client';
 
 export type AuthUser = {
   id: string;

@@ -1,4 +1,5 @@
-import { OrderStatusV2, OrderStateV2, WorkflowV2 } from '../../../types/orderStatus-V2';
+import { OrderStatusV2, OrderStateV2, WorkflowV2 } from "../../../types/orderStatus";
+
 
 export const canEndStep = (step: OrderStatusV2, state: OrderStateV2 , wf: WorkflowV2[keyof WorkflowV2]) => {
 

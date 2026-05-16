@@ -19,6 +19,8 @@ model order {
   number_of_pages Int
   step_quantities Json?
   step_logs step_logs[]
+  order_parts order_parts[]
+  step_execution step_execution[]
 }
 
 model employee {
@@ -34,16 +36,56 @@ model step_logs {
   id         String           @id @default(uuid())
   step_name  step_name
   order_id   String
+  order_part_id  String?
+
   event_type step_event_type
   created_at DateTime @default(now())
   employee   String
 
   order      order     @relation(fields: [order_id], references: [id])
   employeeRel employee  @relation(fields: [employee], references: [id])
+  order_part     order_parts?  @relation(fields: [order_part_id], references: [id])
+
 
   @@index([order_id])
   @@index([step_name])
   @@index([created_at])
+}
+
+model order_parts {
+  id        String @id @default(uuid())
+
+  order_id  String
+  order     order @relation(fields: [order_id], references: [id])
+
+  variant   Variant
+  runs      Int
+  part_quantity  Int
+  step_execution step_execution[]
+  step_logs     step_logs[]
+}
+
+model step_execution {
+  id             String      @id @default(uuid())
+  order_part_id  String?
+  order_id       String
+
+  step_type      step_name
+  step_scope     step_scope
+
+  done_quantity  Int?
+  started_at   DateTime?
+  finished_at  DateTime?
+  status         execution_status
+  order_part     order_parts? @relation(fields: [order_part_id], references: [id])
+  order          order       @relation(fields: [order_id], references: [id])
+  created_at     DateTime @default(now())
+}
+
+enum step_scope {
+  per_part
+  per_order
+  aggregated
 }
 
 enum employee_role {
@@ -84,4 +126,20 @@ enum step_name {
   hardcover_binding
   binding
   stitching
+}
+
+enum Variant {
+  V4
+  V8
+  V16
+  V24
+  V32
+  V64
+}
+
+
+enum execution_status {
+  active
+  done
+  cancelled
 }
