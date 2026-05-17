@@ -121,6 +121,13 @@
     #addPartBtn:hover {
       background: #333;
     }
+
+    #logoutBtn {
+      width: auto;
+      padding: 6px 12px;
+      display: block;
+      margin: auto;
+    }
   </style>
 </head>
 
@@ -299,7 +306,14 @@
       status.innerText = "Error: " + err.message;
     }
   });
-</script>
 
+</script>
+<button id="logoutBtn">Logout</button>
+<script>
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      window.location.href = "/login.html";
+    });
+</script>
 </body>
 </html>

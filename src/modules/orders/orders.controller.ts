@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { createOrderService, getAllOrdersService, getOrderService, createStepEventV2 } from './orders.service';
 import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
-import { workflow, roleStatusMap, getWorkflow as getWorkflowSequence, stepScope } from './orders.workflow';
+import { roleStatusMap, getWorkflow as getWorkflowSequence, stepScope } from './orders.workflow';
 import { employee_role, step_name } from '@prisma/client';
 import { OrderStatus, WorkflowMap, WorkflowStep } from '../../types/orderStatus';
 import { getWorkflowMap } from './domain/workflowContext';
@@ -101,7 +101,7 @@ const getRoleSteps = (role: employee_role, wf: WorkflowMap) => {
 
 };
 
-const getLatestExecution = async (ctx: { orderId: string; step: string; orderPartId?: string | null; }) => {
+const getLatestExecution = async (ctx: { orderId: string; step: step_name; orderPartId?: string | null; }) => {
   const { orderId, step, orderPartId } = ctx;
   const scope = getScope(step);
 
@@ -120,7 +120,8 @@ const getLatestExecution = async (ctx: { orderId: string; step: string; orderPar
   });
 };
 
-const isStepStartedOrDone = async (ctx: { orderId: string; step: string;orderPartId?: string | null; }) => {
+
+const isStepStartedOrDone = async (ctx: { orderId: string; step: step_name; orderPartId?: string | null; }) => {
   const execution = await getLatestExecution(ctx);
 
   return Boolean(
@@ -129,7 +130,7 @@ const isStepStartedOrDone = async (ctx: { orderId: string; step: string;orderPar
   );
 };
 
-const allPartsReadyInDependency = async (ctx: { order: any; dependencyStep: string; }) => {
+const allPartsReadyInDependency = async (ctx: { order: any; dependencyStep: step_name; }) => {
   const { order, dependencyStep } = ctx;
   const dependencyScope = getScope(dependencyStep);
   const partIds = order.order_parts.map((part: any) => part.id);
@@ -164,12 +165,12 @@ const allPartsReadyInDependency = async (ctx: { order: any; dependencyStep: stri
   );
 
   return partIds.every((partId: string) => readyPartIds.has(partId));
-};
+}; 
 
 const canStartStepForPart = async (ctx: {
   order: any;
   wf: WorkflowMap;
-  step: string;
+  step: step_name;
   orderPartId?: string | null;
 }) => {
   const { order, wf, step, orderPartId } = ctx;

@@ -1,19 +1,15 @@
 import prisma from '../../lib/prisma';
-import { Prisma, product_type, step_scope } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { HttpError } from '../../utils/errors';
-import { employee_role, step_name, step_event_type, } from '@prisma/client';
+import { employee_role, } from '@prisma/client';
 import { roleStatusMap, workflow } from './orders.workflow';
-//import { buildState } from './state/state';
 import { OrderStatusV2, WorkflowV2, WorkflowProductType, WorkflowStep, EventType } from "../../types/orderStatus"
-//import { canStartStepV2 } from './domain/canStartStep';
-//import { assertRoleCanAccessStep } from './domain/roleGuard';
 import { handleEnd } from './handlers/handleEnd';
 import { handleStart } from './handlers/handleStart';
-//import { stepScope } from './orders.workflow';
 import { getWorkflow, getStepFromRole, getStepDependencies, validateStepCanStart } from './domain/workflowContext';
 
 type CreateOrderData = Prisma.orderCreateInput;
-//type CreateOrderParts = Prisma.order_partsCreateInput
+
 
 export const getAllOrdersService = async () => {
     return await prisma.order.findMany({
@@ -94,7 +90,6 @@ export const createOrderService = async (data: CreateOrderData, partsData: Omit<
     });
 };
 
-//const BLOCKING_STATUSES = ['active', 'done'] as const;
 
 export const createStepEventV2 = async (orderNumber: number, userId: string, role: employee_role, eventType: EventType, orderPartId: string, stepQuantity?: number) => {
   return prisma.$transaction(async (tx) => {
@@ -123,15 +118,7 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
         throw new HttpError('Step quantity required', 400);
       }
 
-      return handleEnd({
-        tx,
-        order,
-        userId,
-        role,
-        wf,
-        stepQuantity,
-        orderPartId
-      });
+      return handleEnd({ tx, order, userId, role, wf, stepQuantity, orderPartId });
     }
 
     throw new HttpError('Invalid event type', 400);
