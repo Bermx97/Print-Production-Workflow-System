@@ -2,7 +2,7 @@
 
 ## Demo 
 
-https://github.com/user-attachments/assets/74de255e-0d52-4dcf-a6a0-46cb25a3b142
+https://github.com/user-attachments/assets/12b51cc7-0f2b-46d2-ba57-60a6f008b8f2
 
 ## Status
 Project in progress (WIP)
@@ -13,9 +13,7 @@ Current state:
 - Workflow engine (start/end step logic) implemented
 - Role-based access control integrated with workflow steps
 - Step logging system active (event sourcing style)
-- Order state builder (`buildState`) introduced for deriving current status
 - Initial integration tests for workflow transitions added
-- Step speed / analytics layer introduced (performance per step based on logs)
 - Order UI expanded with step visualization in frontend views
 - Order search endpoint added for direct lookup by order number
 
@@ -31,11 +29,25 @@ Some parts of workflow logic are still being stabilized.
 
 ## Overview
 
-A backend REST API for managing production orders with a structured workflow engine and role-based access control.
+Backend REST API for managing production orders in manufacturing / printing workflows.
 
-The system is designed for production environments (e.g. printing / manufacturing pipelines), where orders move through predefined stages and only specific roles can execute or complete specific steps.
+The system models production as a **stateful workflow engine** where orders move through predefined steps.
 
-Workflow is event-driven and based on step logs rather than direct state mutation.
+Each step is executed and tracked via **event-driven execution records**, with no global mutable order state.
+
+The system is designed for real-world production environments where:
+
+- multiple roles operate on different steps
+- production is split into multiple parts (variants/signatures)
+- steps have dependencies
+- execution must be auditable and traceable
+  
+### Execution-driven architecture
+
+The system is based on:
+
+- `step_execution` → **current state (source of truth)**
+- `step_logs` → **event history (audit trail)**
 
 ---
 
@@ -44,7 +56,6 @@ Workflow is event-driven and based on step logs rather than direct state mutatio
 - Create and manage orders
 - Workflow engine with step transitions (START / END)
 - Event-based step tracking (`step_logs`)
-- Derived order state (`buildState`)
 - Role-based access control (RBAC per step)
 - Step dependency validation
 - Fetch orders (filtered and full views)
@@ -55,8 +66,19 @@ Workflow is event-driven and based on step logs rather than direct state mutatio
 - Integration tests for workflow transitions and authorization
 - Frontend UI for order tracking with live step status
 - Separation of business logic into services (controller/service split)
+- Scoped execution model:
+  - per_part
+  - aggregated
+  - per_order
 
 ---
+## Role-based access control (RBAC)
+- Role → step mapping
+- Step-level access enforcement
+- Restricted execution based on operator role
+
+## Multi-part production support
+Orders contain `order_parts` representing production variants/signatures.
 
 ## Workflow
 
@@ -100,7 +122,6 @@ Invalid step access returns:
 ## Architecture Notes
 
 - `step_logs` → event history (START / END)
-- `buildState()` → derives current step state from logs
 - `workflow config` → defines dependencies between steps
 - `analytics service` → computes step duration and speed based on timestamps
 - frontend derives UI state from backend logs (no hard state stored)
@@ -126,7 +147,8 @@ Current direction:
 ## Database Schema:
 
 
-<img width="968" height="688" alt="Untitled" src="https://github.com/user-attachments/assets/3e38de31-46c1-4395-9cad-7ef25e174f7d" />
+<img width="1557" height="880" alt="Untitled (1)" src="https://github.com/user-attachments/assets/3ed60985-4733-4dd9-a7d9-bf6b59f7ec23" />
+
 <img width="299" height="879" alt="image" src="https://github.com/user-attachments/assets/762828d4-d287-47d8-ab42-12c3d5e2ed93" />
 <img width="261" height="325" alt="image" src="https://github.com/user-attachments/assets/326886e1-120c-4f81-b9d9-3e94878ee1e2" />
 
