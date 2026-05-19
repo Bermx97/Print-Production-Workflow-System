@@ -1,6 +1,5 @@
 import { body } from 'express-validator';
 import { product_type, Variant } from '@prisma/client';
-
 export const createOrderValidation = [
     body('orderNumber')
     .isInt({ min: 1, max: 1000000 })
@@ -42,9 +41,9 @@ export const createOrderValidation = [
     .isArray({ min: 1, max: 6 })
     .withMessage('You can add between 1 and 6 parts per order'),
 
-    body('parts.*.variant'),
-    //.isIn([Object.values(Variant)])
-    //.withMessage('variant must be one of: V4, V8, V16, V32, V64'),
+    body('parts.*.variant')
+    .isIn(Object.values(Variant))
+    .withMessage('variant must be one of: V4, V8, V16, V24, V32, V64'),
 
     body('parts.*.runs')
     .isInt({ min: 1, max: 100 })

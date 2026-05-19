@@ -4,12 +4,16 @@ import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
 import { roleStatusMap, getWorkflow as getWorkflowSequence, stepScope } from './orders.workflow';
 import { employee_role, step_name } from '@prisma/client';
-import { OrderStatus, WorkflowMap, WorkflowStep } from '../../types/orderStatus';
-import { getWorkflowMap } from './domain/workflowContext';
+import { getWorkflowMap, READY_STATUSES, getScope } from './domain/workflowContext';
+import { canStartStepForPart } from './workflow/rules/dependency.rules';
+import { getLatestExecution } from './workflow/queries/execution.queries';
+import { getRoleSteps } from './workflow/access/role.access';
+import { getOrderState } from './workflow/state/orderState.service';
 
 
 export const getOrders = async (req: Request, res: Response) => {
   const orders = await getAllOrdersService();
+  console.log(orders)
   return res.status(200).json(orders);
 };
 
@@ -83,203 +87,7 @@ export const endStepV2 = async (req: Request, res: Response) => {
   return res.json(result);
 };
 
-const READY_STATUSES = ['active', 'done'] as const;
 
-
-const getScope = (step: string) => stepScope[step as WorkflowStep];
-
-const getRoleSteps = (role: employee_role, wf: WorkflowMap) => {
-  const access = roleStatusMap[role];
-
-  if (!access) return [];
-
-  if (access.type === 'ALL') {
-    return Object.keys(wf) as OrderStatus[];
-  }
-
-  return access.steps.filter((step) => wf[step]);
-
-};
-
-const getLatestExecution = async (ctx: { orderId: string; step: step_name; orderPartId?: string | null; }) => {
-  const { orderId, step, orderPartId } = ctx;
-  const scope = getScope(step);
-
-  return prisma.step_execution.findFirst({
-    where: {
-      order_id: orderId,
-      step_type: step as step_name,
-
-      ...(scope === 'per_part'
-        ? { order_part_id: orderPartId }
-        : {})
-    },
-    orderBy: {
-      started_at: 'desc'
-    }
-  });
-};
-
-
-const isStepStartedOrDone = async (ctx: { orderId: string; step: step_name; orderPartId?: string | null; }) => {
-  const execution = await getLatestExecution(ctx);
-
-  return Boolean(
-    execution &&
-    READY_STATUSES.includes(execution.status as any)
-  );
-};
-
-const allPartsReadyInDependency = async (ctx: { order: any; dependencyStep: step_name; }) => {
-  const { order, dependencyStep } = ctx;
-  const dependencyScope = getScope(dependencyStep);
-  const partIds = order.order_parts.map((part: any) => part.id);
-
-  if (dependencyScope !== 'per_part') {
-    return isStepStartedOrDone({
-      orderId: order.id,
-      step: dependencyStep
-    });
-  }
-
-  if (partIds.length === 0) return false;
-
-  const readyExecutions = await prisma.step_execution.findMany({
-    where: {
-      order_id: order.id,
-      step_type: dependencyStep as step_name,
-      order_part_id: {
-        in: partIds
-      },
-      status: {
-        in: [...READY_STATUSES]
-      }
-    },
-    select: {
-      order_part_id: true
-    }
-  });
-
-  const readyPartIds = new Set(
-    readyExecutions.map((execution) => execution.order_part_id)
-  );
-
-  return partIds.every((partId: string) => readyPartIds.has(partId));
-}; 
-
-const canStartStepForPart = async (ctx: {
-  order: any;
-  wf: WorkflowMap;
-  step: step_name;
-  orderPartId?: string | null;
-}) => {
-  const { order, wf, step, orderPartId } = ctx;
-  const scope = getScope(step);
-
-  const alreadyStartedOrDone = await isStepStartedOrDone({
-    orderId: order.id,
-    step,
-    orderPartId
-  });
-
-  if (alreadyStartedOrDone) return false;
-
-  const dependencies = wf[step as OrderStatus] ?? [];
-
-  for (const dependencyStep of dependencies) {
-    if (scope === 'per_part') {
-      const dependencyReady = await isStepStartedOrDone({
-        orderId: order.id,
-        step: dependencyStep,
-        orderPartId
-      });
-
-      if (!dependencyReady) return false;
-
-      continue;
-    }
-
-    const dependencyReady = await allPartsReadyInDependency({
-      order,
-      dependencyStep
-    });
-
-    if (!dependencyReady) return false;
-  }
-
-  return true;
-};
-
-const getOrderState = async (order: any, wf: WorkflowMap) => {
-  const state: Record<string, string> = {};
-
-  for (const step of Object.keys(wf) as OrderStatus[]) {
-    const scope = getScope(step);
-
-    if (scope === 'per_part') {
-      const partIds = order.order_parts.map((part: any) => part.id);
-
-      const executions = await prisma.step_execution.findMany({
-        where: {
-          order_id: order.id,
-          step_type: step as step_name,
-          order_part_id: {
-            in: partIds
-          },
-          status: {
-            in: [...READY_STATUSES]
-          }
-        },
-        select: {
-          status: true,
-          order_part_id: true
-        }
-      });
-
-      if (executions.some((execution) => execution.status === 'active')) {
-        state[step] = 'ACTIVE';
-      } else if (
-        partIds.length > 0 &&
-        partIds.every((partId: string) =>
-          executions.some(
-            (execution) =>
-              execution.order_part_id === partId &&
-              execution.status === 'done'
-          )
-        )
-      ) {
-        state[step] = 'DONE';
-      } else {
-        state[step] = 'WAITING';
-      }
-
-      continue;
-    }
-
-    const execution = await prisma.step_execution.findFirst({
-      where: {
-        order_id: order.id,
-        step_type: step as step_name,
-        status: {
-          in: [...READY_STATUSES]
-        }
-      },
-      orderBy: {
-        started_at: 'desc'
-      }
-    });
-
-    if (execution?.status === 'active') {
-      state[step] = 'ACTIVE';
-    } else if (execution?.status === 'done') {
-      state[step] = 'DONE';
-    } else {
-      state[step] = 'WAITING';
-    }
-  }
-
-  return state;
-};
 
 export const getVisibleOrdersV2 = async (req: Request, res: Response) => {
   const role = req.user.role as employee_role;

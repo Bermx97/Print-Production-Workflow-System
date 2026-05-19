@@ -2,6 +2,22 @@ import { order, product_type } from '@prisma/client';
 import { getAuthToken } from './auth';
 import prisma from '../../src/lib/prisma'
 import { workflow } from '../../src/modules/orders/orders.workflow';
+import { Variant } from '@prisma/client';
+
+const variants = Object.values(Variant)
+
+const getRandomInt = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+export function getRandomParts() {
+  const count = getRandomInt(1, 6);
+  const parts = Array.from({ length: count }, () => ({
+    variant: getRandomVariant(),
+    runs: getRandomRun(),
+    part_quantity: getRandomQuantity()
+  }));
+  return parts
+}
 
 export function getRandomQuantity() {
   const min = 400;
@@ -18,6 +34,14 @@ export function getRandomEvenPages() {
 
   return value;
 };
+
+export function getRandomVariant() {
+  return variants[Math.floor(Math.random() * variants.length)]
+}
+
+export function getRandomRun() {
+  return Math.floor(Math.random() * 10) + 1;
+}
 
 const clients = [
   'Oslo Publishing House',
@@ -39,13 +63,18 @@ export const createOrder = async (productType: product_type) => {
     const orderNumber = Number(`${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 100)}`)
 
     const data = { order_number: orderNumber, due_date: new Date('2026-08-01'), created_by: user.user.id, product_type: productType, quantity: getRandomQuantity(), customer: getRandomClient(), number_of_pages: getRandomEvenPages() };
-
-    const order = await prisma.order.create({data});
-    return order;
+    const parts = getRandomParts()
+    const order = await prisma.order.create({ data });
+    await prisma.order_parts.createMany({
+      data: parts.map(part => ({
+        ...part,
+        order_id: order.id
+      }))
+    }); return order
 }
 
 export const createOrderWithLogs = async (productType: product_type, quantity: number ) => {
-  const{ user }= await getAuthToken();
+  const { user }= await getAuthToken();
   const order = await createOrder(productType);
   const steps = Object.keys(workflow[productType]);
   const logs: any[] = [];

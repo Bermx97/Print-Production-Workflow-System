@@ -6,7 +6,8 @@ import { roleStatusMap, workflow } from './orders.workflow';
 import { OrderStatusV2, WorkflowV2, WorkflowProductType, WorkflowStep, EventType } from "../../types/orderStatus"
 import { handleEnd } from './handlers/handleEnd';
 import { handleStart } from './handlers/handleStart';
-import { getWorkflow, getStepFromRole, getStepDependencies, validateStepCanStart } from './domain/workflowContext';
+import { getWorkflow, getStepFromRole, getStepDependencies } from './domain/workflowContext';
+import { validateStepCanStart } from './workflow/rules/dependency.rules';
 
 type CreateOrderData = Prisma.orderCreateInput;
 
@@ -88,6 +89,7 @@ export const createOrderService = async (data: CreateOrderData, partsData: Omit<
         order_id: order.id
       }))
     });
+    return order
 };
 
 

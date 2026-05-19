@@ -1,37 +1,23 @@
+import { expect, test, describe, it, beforeEach } from "@jest/globals";
 import request from 'supertest';
 import app from '../../../src/app';
 import prisma from '../../../src/lib/prisma';
 import { getAuthToken } from '../../utils/auth';
-import { createOrder, getRandomQuantity, getRandomClient, getRandomEvenPages } from "../../utils/order";
+import { createOrder, getRandomQuantity, getRandomClient, getRandomEvenPages, getRandomVariant, getRandomRun, getRandomParts } from "../../utils/order";
+let parts = getRandomParts()
 
 beforeEach(async () => {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE "order", "employee" RESTART IDENTITY CASCADE;
   `);
 });
-/*
-describe('GET /orders/my', () => {
-  it('should return only executable orders for role', async () => {
-    const {token, user: { id } } = await getAuthToken('folding_operator');
 
-    await createOrder('hardcover_book');
-    const { order_number } = await createOrder('hardcover_book', ['printing'])
-
-    const response = await request(app)
-      .get('/orders/my')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveLength(1);
-    expect(response.body[0].order_number).toBe(order_number);
-  });
-});
-*/
 describe('GET /orders', () => {
   it('should return 200 if orders exist', async () => {
+    await createOrder('perfect_bound_book')
     const { token } = await getAuthToken();
     const response = await request(app)
-    .get('/orders')
+    .get('/')
     .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
@@ -93,6 +79,7 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
+      parts
     })
     .set("Authorization", `Bearer ${token}`);
 
@@ -112,6 +99,7 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
+      parts
     })
     .set("Authorization", `Bearer ${token}`);
 
@@ -120,7 +108,7 @@ describe('POST /orders', () => {
   });
 
   it('should return 400 if productType is invalid', async () => {
-  const { token, user: { id } } = await getAuthToken()
+  const { token, user: { id } } = await getAuthToken();
   const response = await request(app)
   .post('/orders')
   .send({
@@ -131,6 +119,7 @@ describe('POST /orders', () => {
     quantity: getRandomQuantity(),
     customer: getRandomClient(),
     numberOfPages: getRandomEvenPages(),
+    parts
   })
   .set("Authorization", `Bearer ${token}`);
   
@@ -149,6 +138,7 @@ describe('POST /orders', () => {
       quantity: getRandomQuantity(),
       customer: getRandomClient(),
       numberOfPages: getRandomEvenPages(),
+      parts
     });
 
     expect(response.status).toBe(401);
@@ -158,7 +148,7 @@ describe('POST /orders', () => {
   it('should return 409 if order already exists', async () => {
     const { token } = await getAuthToken();
     const orderNumber = Number(Math.floor(Math.random() * 10000));
-    const data = { orderNumber, dueDate: new Date('2026-08-01'), productType: 'hardcover_book', quantity: getRandomQuantity(), customer: getRandomClient(), numberOfPages: getRandomEvenPages() };
+    const data = { orderNumber, dueDate: new Date('2026-08-01'), productType: 'hardcover_book', quantity: getRandomQuantity(), customer: getRandomClient(), numberOfPages: getRandomEvenPages(), parts };
 
     await request(app)
     .post('/orders')
@@ -178,7 +168,7 @@ describe('POST /orders', () => {
     const { token, user: { id } } = await getAuthToken();
  
     const orderNumber = Number(Math.floor(Math.random() * 10000));
-    const data = {orderNumber, dueDate: new Date("2026-08-01"), productType: 'hardcover_book', quantity: getRandomQuantity(), customer: getRandomClient(), numberOfPages: getRandomEvenPages() }
+    const data = {orderNumber, dueDate: new Date("2026-08-01"), productType: 'hardcover_book', quantity: getRandomQuantity(), customer: getRandomClient(), numberOfPages: getRandomEvenPages(), parts }
 
     const response = await request(app)
     .post('/orders')
