@@ -4,145 +4,170 @@
 
 https://github.com/user-attachments/assets/12b51cc7-0f2b-46d2-ba57-60a6f008b8f2
 
-## Status
-Project in progress (WIP)
-
-Core workflow system is functional, but still evolving and being refactored.
-
-Current state:
-- Workflow engine (start/end step logic) implemented
-- Role-based access control integrated with workflow steps
-- Step logging system active (event sourcing style)
-- Initial integration tests for workflow transitions added
-- Order UI expanded with step visualization in frontend views
-- Order search endpoint added for direct lookup by order number
-
-Known limitations:
-- some workflow edge cases still require extended testing
-- role-to-step mapping may still be adjusted
-- step completion validation logic is being refined
-- API structure is partially duplicated (v1/v2 transitional state)
-
-Some parts of workflow logic are still being stabilized.
-
----
 
 ## Overview
 
-Backend REST API for managing production orders in manufacturing / printing workflows.
+Backend REST API for managing production orders in manufacturing / print production workflows.
 
-The system models production as a **stateful workflow engine** where orders move through predefined steps.
+The system models production as a stateful workflow engine, where orders move through predefined steps with strict dependencies and role-based execution rules.
 
-Each step is executed and tracked via **event-driven execution records**, with no global mutable order state.
+Each step is executed and tracked via event-driven records — there is no global mutable order state.
 
-The system is designed for real-world production environments where:
-
-- multiple roles operate on different steps
-- production is split into multiple parts (variants/signatures)
-- steps have dependencies
-- execution must be auditable and traceable
-  
-### Execution-driven architecture
-
-The system is based on:
-
-- `step_execution` → **current state (source of truth)**
-- `step_logs` → **event history (audit trail)**
-
----
+Everything is derived from execution history.
 
 ## Features
 
+- User registration and authentication (login/logout)
 - Create and manage orders
 - Workflow engine with step transitions (START / END)
 - Event-based step tracking (`step_logs`)
 - Role-based access control (RBAC per step)
 - Step dependency validation
+- Multi-part production support (`order_parts`)
 - Fetch orders (filtered and full views)
 - Single order detail view
-- Single order detail view
 - Order search by order number
-- Step performance analytics (speed per step)
-- Integration tests for workflow transitions and authorization
-- Frontend UI for order tracking with live step status
+- Integration tests
+- Frontend UI with live step tracking
 - Separation of business logic into services (controller/service split)
-- Scoped execution model:
-  - per_part
-  - aggregated
-  - per_order
 
----
-## Role-based access control (RBAC)
-- Role → step mapping
-- Step-level access enforcement
-- Restricted execution based on operator role
+## Core Design
+Execution-driven architecture
 
-## Multi-part production support
-Orders contain `order_parts` representing production variants/signatures.
+The system is based on:
 
-## Workflow
+step_execution → current execution state (active / done)
+step_logs → immutable event history (audit trail)
 
-Each product type follows a predefined step graph.
+No “order status” is stored — the system is fully event-sourced.
 
-Example:
+Each product type has its own dependency graph:
 
-hardcover_book:
-printing → folding → (sewing || case_making) → hardcover_binding
+- hardcover_book:
+  - printing → folding → (sewing | case_making) → hardcover_binding
 
-perfect_bound_book:
-printing → folding_with_milling → binding
+- perfect_bound_book:
+  - printing → folding_with_milling → binding
 
-saddle_stitching:
-printing → folding → stitching
+- saddle_stitching:
+  - printing → folding → stitching
 
-Each step can have dependencies defined in workflow configuration.
+Step dependencies
+export const workflow:   Record<ProductType, Partial<Record<OrderStatus, OrderStatus[]>>>
 
----
+Each step defines which previous steps are required before it can start.
 
-## Role Permissions
+### Step scope model:
+  - printing: 'per_part'
+  - folding: 'per_part'
+  - folding_with_milling: 'per_part'
 
-Each role has access to specific steps:
+  - sewing: 'aggregated'
+  - case_making: 'aggregated'
+
+
+  - hardcover_binding: 'per_order'
+  - binding: 'per_order'
+  - stitching: 'per_order
+
+Scopes
+
+per_part → each order part executes independently
+
+aggregated → requires all parts to satisfy dependency
+
+per_order → single execution per entire order
+
+## Role-Based Access Control (RBAC)
+
+Each role is mapped to specific workflow steps: 
+
+
+## Operators:
 
 - printer_operator → printing
+
 - folding_operator → folding / folding_with_milling
+
 - sewing_operator → sewing
+
 - case_maker → case_making
+
 - hardcover_binder_operator → hardcover_binding
+
 - perfect_bound_operator → binding
+ 
 - stitching_operator → stitching
 
-Admin / technologist / seller:
-- full access to all steps
+- admin → full access to all workflow steps
 
-Invalid step access returns:
-- 409 Conflict or 403 Forbidden (depending on validation layer)
+- seller 
 
----
+- technologist
 
-## Architecture Notes
 
-- `step_logs` → event history (START / END)
-- `workflow config` → defines dependencies between steps
-- `analytics service` → computes step duration and speed based on timestamps
-- frontend derives UI state from backend logs (no hard state stored)
+## Execution Rules
 
-Current direction:
-- moving from controller-heavy logic → service-based workflow engine
-- increasing test coverage for transitions and role enforcement
+A step can only start if:
 
----
+- user role has access to the step
 
-## Tech Stack
+- dependencies are satisfied
+
+- step is not already active or completed
+
+- scope rules are respected (per_part / aggregated / per_order)
+ 
+## Features
+
+Core system
+
+Create and manage production orders
+
+Multi-part production (order_parts)
+
+Workflow engine (START / END execution model)
+
+Dependency validation system
+
+Role-based access control per step
+
+Event-driven logging system
+
+Querying
+
+Filtered order views based on role permissions
+
+Single order lookup by order number
+
+Step-level visibility per order part
+
+Execution-based state derivation
+
+Step execution history tracking
+
+Step performance insights
+
+
+## Tech Stack:
 
 - Node.js
+
 - Express.js
+
 - TypeScript
+
 - Prisma ORM
+
 - PostgreSQL (NeonDB)
+
 - JWT authentication
+
 - bcrypt
+
 - express-validator
-- Supertest (integration testing)
+
+- Jest + Supertest
 
 ## Database Schema:
 
