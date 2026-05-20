@@ -18,7 +18,7 @@ Everything is derived from execution history.
 ## Features
 
 - User registration and authentication (login/logout)
-- Create and manage orders
+- Create and manage production orders
 - Workflow engine with step transitions (START / END)
 - Event-based step tracking (`step_logs`)
 - Role-based access control (RBAC per step)
@@ -118,36 +118,6 @@ A step can only start if:
 
 - scope rules are respected (per_part / aggregated / per_order)
  
-## Features
-
-Core system
-
-Create and manage production orders
-
-Multi-part production (order_parts)
-
-Workflow engine (START / END execution model)
-
-Dependency validation system
-
-Role-based access control per step
-
-Event-driven logging system
-
-Querying
-
-Filtered order views based on role permissions
-
-Single order lookup by order number
-
-Step-level visibility per order part
-
-Execution-based state derivation
-
-Step execution history tracking
-
-Step performance insights
-
 
 ## Tech Stack:
 
