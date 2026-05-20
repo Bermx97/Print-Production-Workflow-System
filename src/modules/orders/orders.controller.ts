@@ -3,7 +3,7 @@ import { createOrderService, getAllOrdersService, getOrderService, createStepEve
 import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
 import { roleStatusMap, getWorkflow as getWorkflowSequence, stepScope } from './orders.workflow';
-import { employee_role, step_name } from '@prisma/client';
+import { employee_role } from '@prisma/client';
 import { getWorkflowMap, READY_STATUSES, getScope } from './domain/workflowContext';
 import { canStartStepForPart } from './workflow/rules/dependency.rules';
 import { getLatestExecution } from './workflow/queries/execution.queries';
@@ -57,8 +57,7 @@ export const createOrder = async (req: Request, res: Response) => {
 };
 
 export const startStepV2 = async (req: Request, res: Response) => {
-  const { orderPartId } = req.body
-  
+  const { orderPartId } = req.body;
   const result =
     await createStepEventV2(
       Number(req.params.orderNumber),
@@ -72,7 +71,7 @@ export const startStepV2 = async (req: Request, res: Response) => {
 };
 
 export const endStepV2 = async (req: Request, res: Response) => {
-  const { stepQuantity, orderPartId } = req.body
+  const { stepQuantity, orderPartId } = req.body;
 
   const result =
     await createStepEventV2(

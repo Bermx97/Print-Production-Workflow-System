@@ -47,13 +47,13 @@ export const createOrderValidation = [
 
     body('parts.*.runs')
     .isInt({ min: 1, max: 100 })
-    .withMessage('Signatures must be between 1 and 200')
+    .withMessage('Signatures must be between 1 and 100')
     .toInt(),
 
 
     body('parts.*.part_quantity')
     .isInt({ min: 1, max: 1000000 })
-    .withMessage('part quantity must be between 1 and 1000000')
+    .withMessage('Part quantity must be between 1 and 1000000')
     .toInt(),
 
 ];
