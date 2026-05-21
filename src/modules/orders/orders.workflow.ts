@@ -43,9 +43,11 @@ export const stepScope = {
   stitching: 'per_order'
 } as const;
 
+/*
 export const mergeGroups = {
   post_folding: ['sewing', 'case_making', 'hardcover_binding', 'binding', 'stitching' ]
-};
+}; 
+*/
 
 export const roleStatusMap: Record<employee_role, RoleAccess> = {
   printer_operator: { type: 'LIMITED', steps: ['printing'] },

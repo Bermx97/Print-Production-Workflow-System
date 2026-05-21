@@ -54,11 +54,6 @@
       background: #c90000;
     }
 
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.75;
-    }
-
     .secondary {
       background: #1f1f1f;
       border: 1px solid #333;
@@ -75,7 +70,7 @@
       background: #1f1f1f;
       color: white;
       font-size: 16px;
-      width: 160px;
+      width: 180px;
     }
 
     #orders {
@@ -85,13 +80,12 @@
     .order-card {
       background: #141414;
       border-radius: 8px;
-      padding: 15px;
+      padding: 20px;
       margin-bottom: 15px;
       border-left: 4px solid #ff2a2a;
       box-shadow: 0 0 10px rgba(255, 42, 42, 0.1);
       cursor: pointer;
       transition: 0.2s ease;
-      font-size: 18px;
     }
 
     .order-card:hover {
@@ -104,146 +98,18 @@
     .order-title {
       color: #ff2a2a;
       font-weight: bold;
-      margin-bottom: 6px;
-      font-size: 20px;
+      margin-bottom: 12px;
+      font-size: 22px;
     }
 
-    .steps {
-      color: #ccc;
-      margin: 10px 0;
-      font-size: 16px;
+    .order-info {
+      line-height: 1.8;
+      color: #ddd;
     }
 
-    .state-row {
-      margin-bottom: 4px;
-    }
-
-    .state-label {
-      font-size: 17px;
-    }
-
-    .parts-title {
-      margin-top: 12px;
+    .label {
       color: #fff;
       font-weight: bold;
-      font-size: 15px;
-    }
-
-    .parts {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-      margin-bottom: 14px;
-    }
-
-    .part-btn {
-      background: #1f1f1f;
-      border: 1px solid #333;
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 15px;
-      display: inline-flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
-      min-width: 135px;
-      min-height: 72px;
-      justify-content: center;
-    }
-
-    .part-btn:hover {
-      background: #252525;
-      border-color: #ff2a2a;
-    }
-
-    .part-btn.selected {
-      border-color: #ff2a2a;
-      box-shadow: 0 0 0 1px #ff2a2a inset;
-    }
-
-    .part-btn.active {
-      border-color: #ffcc00;
-      color: #ffdf5d;
-    }
-
-    .part-btn.done {
-      border-color: #4caf50;
-      color: #9be49f;
-      background: #122015;
-    }
-
-    .part-btn.blocked {
-      border-color: #555;
-      color: #888;
-      background: #181818;
-    }
-
-    .part-status {
-      font-size: 13px;
-      opacity: 0.9;
-    }
-
-    .part-meta {
-      color: #bbb;
-      font-size: 13px;
-      font-weight: normal;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    #quantityModal {
-      display: none;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-    }
-
-    .modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #141414;
-      padding: 20px;
-      border-radius: 8px;
-      border-left: 4px solid #ff2a2a;
-      width: 320px;
-    }
-
-    .modal h2 {
-      margin-top: 0;
-      color: #ff2a2a;
-    }
-
-    .modal p {
-      color: #ccc;
-      font-size: 14px;
-    }
-
-    .modal input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px;
-      margin: 10px 0;
-      background: #1f1f1f;
-      border: 1px solid #333;
-      color: white;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 10px;
     }
 
     #errorBox {
@@ -259,11 +125,6 @@
       z-index: 9999;
       max-width: 320px;
     }
-
-    .muted {
-      color: #888;
-      font-size: 14px;
-    }
   </style>
 </head>
 
@@ -273,36 +134,37 @@
   <h1>MY ORDERS</h1>
 
   <div class="top-bar">
-    <button onclick="window.location.href='/create-order.html'">Create Order</button>
-    <button class="secondary" onclick="window.location.href='/all-orders.html'">All Orders</button>
-    <button class="secondary" onclick="loadOrders()">Refresh</button>
+    <button onclick="window.location.href='/create-order.html'">
+      Create Order
+    </button>
 
-    <input id="searchOrderInput" class="search-input" type="number" placeholder="Order number" />
+    <button class="secondary" onclick="window.location.href='/all-orders.html'">
+      All Orders
+    </button>
 
-    <button class="secondary" onclick="searchOrder()">Search</button>
+    <button class="secondary" onclick="loadOrders()">
+      Refresh
+    </button>
+
+    <input
+      id="searchOrderInput"
+      class="search-input"
+      type="number"
+      placeholder="Order number"
+    />
+
+    <button class="secondary" onclick="searchOrder()">
+      Search
+    </button>
 
     <div class="spacer"></div>
 
-    <button class="secondary" onclick="logout()">Logout</button>
+    <button class="secondary" onclick="logout()">
+      Logout
+    </button>
   </div>
 
   <div id="orders"></div>
-</div>
-
-<div id="quantityModal">
-  <div class="modal-backdrop"></div>
-
-  <div class="modal">
-    <h2>End step</h2>
-    <p id="endModalText">Enter completed quantity</p>
-
-    <input id="quantityInput" type="number" min="1" />
-
-    <div class="modal-actions">
-      <button onclick="confirmEndStep()">Confirm</button>
-      <button class="secondary" onclick="closeModal()">Cancel</button>
-    </div>
-  </div>
 </div>
 
 <div id="errorBox"></div>
@@ -315,64 +177,6 @@
     window.location.href = "/login.html";
   }
 
-  const AUTH_HEADER = {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json"
-  };
-
-  const STEP_SCOPE = {
-    printing: "per_part",
-    folding: "per_part",
-    folding_with_milling: "per_part",
-    sewing: "aggregated",
-    case_making: "aggregated",
-    hardcover_binding: "per_order",
-    binding: "per_order",
-    stitching: "per_order"
-  };
-
-  const ROLE_REQUIRES_PART = {
-    printer_operator: true,
-    folding_operator: true,
-    sewing_operator: false,
-    case_maker: false,
-    hardcover_binder_operator: false,
-    perfect_bound_operator: false,
-    stitching_operator: false,
-    seller: false,
-    technologist: false,
-    admin: false
-  };
-
-  const selectedParts = {};
-  const partLabels = {};
-
-  let currentOrderNumber = null;
-  let currentOrderPartId = null;
-
-  const tokenPayload = decodeTokenPayload();
-  const currentRole =
-    tokenPayload.role ||
-    tokenPayload.employee_role ||
-    tokenPayload.employeeRole ||
-    null;
-
-  function decodeTokenPayload() {
-    try {
-      const payload = token.split(".")[1];
-      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
-      return JSON.parse(atob(padded));
-    } catch {
-      return {};
-    }
-  }
-
-  function currentStepNeedsPart() {
-    if (!currentRole) return true;
-    return ROLE_REQUIRES_PART[currentRole] === true;
-  }
-
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -382,88 +186,9 @@
       .replaceAll("'", "&#039;");
   }
 
-  function normalizeStatus(value) {
-    if (!value) return "";
-
-    const status = String(value).toUpperCase();
-
-    if (status === "END" || status === "FINISHED" || status === "COMPLETED") {
-      return "DONE";
-    }
-
-    if (status === "START" || status === "IN_PROGRESS") {
-      return "ACTIVE";
-    }
-
-    return status;
-  }
-
-  function formatVariant(value) {
-    return String(value ?? "variant").replace(/^V/i, "");
-  }
-
-  function getPartStatus(part) {
-    const state =
-      part.state ||
-      part.step_state ||
-      part.stepState ||
-      part.steps;
-
-    if (state && currentRole && state[currentRole]) {
-      return normalizeStatus(state[currentRole]);
-    }
-
-    const directStatus =
-      part.status ||
-      part.step_status ||
-      part.stepStatus ||
-      part.execution_status ||
-      part.current_status;
-
-    if (directStatus) {
-      return normalizeStatus(directStatus);
-    }
-
-    if (part.done === true || part.is_done === true || part.completed === true) {
-      return "DONE";
-    }
-
-    if (part.active === true || part.is_active === true) {
-      return "ACTIVE";
-    }
-
-    const executions =
-      part.step_executions ||
-      part.step_execution ||
-      part.executions ||
-      [];
-
-    if (Array.isArray(executions) && executions.length > 0) {
-      const matchingExecutions = currentRole
-        ? executions.filter(execution =>
-            execution.step_type === currentRole ||
-            execution.step_name === currentRole
-          )
-        : executions;
-
-      const latest = matchingExecutions
-        .slice()
-        .sort((a, b) => {
-          const aDate = new Date(a.finished_at || a.started_at || a.created_at || 0);
-          const bDate = new Date(b.finished_at || b.started_at || b.created_at || 0);
-          return bDate - aDate;
-        })[0];
-
-      if (latest) {
-        return normalizeStatus(latest.status || latest.event_type);
-      }
-    }
-
-    return "AVAILABLE";
-  }
-
   function showError(message) {
     const box = document.getElementById("errorBox");
+
     box.innerText = message;
     box.style.display = "block";
 
@@ -472,146 +197,23 @@
     }, 4000);
   }
 
-  function selectPart(orderNumber, partId, button) {
-    selectedParts[orderNumber] = partId;
-
-    const container = button.closest(".parts");
-
-    container.querySelectorAll(".part-btn").forEach(btn => {
-      btn.classList.remove("selected");
-    });
-
-    button.classList.add("selected");
-  }
-
-  async function startStep(orderNumber) {
-    const orderPartId = selectedParts[orderNumber] || null;
-
-    if (currentStepNeedsPart() && !orderPartId) {
-      showError("Select variant first");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API}/${orderNumber}/start`, {
-        method: "POST",
-        headers: AUTH_HEADER,
-        body: JSON.stringify({ orderPartId })
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        showError(data?.message || "Error on START");
-        return;
-      }
-
-      loadOrders();
-    } catch {
-      showError("Network error on START");
-    }
-  }
-
-  function openModal(orderNumber) {
-    const orderPartId = selectedParts[orderNumber] || null;
-
-    if (currentStepNeedsPart() && !orderPartId) {
-      showError("Select variant first");
-      return;
-    }
-
-    currentOrderNumber = orderNumber;
-    currentOrderPartId = orderPartId;
-
-    const label =
-      partLabels[orderNumber]?.[orderPartId] ||
-      "whole order";
-
-    document.getElementById("endModalText").innerText =
-      `Enter completed quantity for ${label}`;
-
-    document.getElementById("quantityModal").style.display = "block";
-  }
-
-  function closeModal() {
-    document.getElementById("quantityModal").style.display = "none";
-    document.getElementById("quantityInput").value = "";
-    currentOrderNumber = null;
-    currentOrderPartId = null;
-  }
-
-  async function confirmEndStep() {
-    const quantity = Number(document.getElementById("quantityInput").value);
-
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      showError("Enter completed quantity");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API}/${currentOrderNumber}/end`, {
-        method: "POST",
-        headers: AUTH_HEADER,
-        body: JSON.stringify({
-          orderPartId: currentOrderPartId,
-          stepQuantity: quantity
-        })
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        showError(data?.message || "Error on END");
-        return;
-      }
-
-      closeModal();
-      loadOrders();
-    } catch {
-      showError("Network error on END");
-    }
-  }
-
-  function renderState(state) {
-    return Object.entries(state || {}).map(([step, status]) => {
-      const normalized = normalizeStatus(status);
-
-      let icon = "&#9898;";
-      let color = "#94a3b8";
-
-      if (normalized === "ACTIVE") {
-        icon = "&#128993;";
-        color = "#ffcc00";
-      }
-
-      if (normalized === "DONE") {
-        icon = "&#10004;";
-        color = "#4caf50";
-      }
-
-      return `
-        <div class="state-row">
-          <span class="state-label" style="color:${color};">
-            ${icon} ${escapeHtml(step)}
-          </span>
-        </div>
-      `;
-    }).join("");
-  }
-
   function renderOrders(orders) {
     const container = document.getElementById("orders");
     container.innerHTML = "";
 
-    (orders || []).forEach(order => {
+    if (!orders.length) {
+      container.innerHTML = "<p>No orders found</p>";
+      return;
+    }
+
+    orders.forEach(order => {
       const div = document.createElement("div");
+
       div.className = "order-card";
 
-      const partsId = `parts-${order.order_number}`;
-      const showParts = currentStepNeedsPart();
-
       div.onclick = () => {
-        window.location.href = `/order.html?orderNumber=${order.order_number}`;
+        window.location.href =
+          `/order-panel.html?orderNumber=${order.order_number}`;
       };
 
       div.innerHTML = `
@@ -619,137 +221,36 @@
           Order #${escapeHtml(order.order_number)}
         </div>
 
-        <div>
-          Customer: ${escapeHtml(order.customer ?? "none")}<br>
-          Product: ${escapeHtml(order.product_type ?? "none")}<br>
-          Quantity: ${escapeHtml(order.quantity ?? "none")}
-        </div>
+        <div class="order-info">
+          <div>
+            <span class="label">Customer:</span>
+            ${escapeHtml(order.customer)}
+          </div>
 
-        <div class="steps">
-          ${renderState(order.state)}
-        </div>
+          <div>
+            <span class="label">Product type:</span>
+            ${escapeHtml(order.product_type)}
+          </div>
 
-        ${showParts
-          ? `
-            <div class="parts-title">Parts</div>
-            <div class="parts" id="${partsId}">
-              <span class="muted">Loading parts...</span>
-            </div>
-          `
-          : ""}
+          <div>
+            <span class="label">Quantity:</span>
+            ${escapeHtml(order.quantity)}
+          </div>
 
-        <div class="actions">
-          <button onclick="event.stopPropagation(); startStep(${order.order_number})">
-            START
-          </button>
-
-          <button class="secondary" onclick="event.stopPropagation(); openModal(${order.order_number})">
-            END
-          </button>
+          <div>
+            <span class="label">Pages:</span>
+            ${escapeHtml(order.number_of_pages)}
+          </div>
         </div>
       `;
 
       container.appendChild(div);
-
-      if (showParts) {
-        loadParts(order.order_number, partsId);
-      }
     });
   }
 
-  async function loadParts(orderNumber, containerId) {
-    try {
-      const res = await fetch(`${API}/${orderNumber}/parts`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        showError(data?.message || "Error loading parts");
-        return;
-      }
-
-      const parts = data?.order_parts || data?.parts || [];
-      const container = document.getElementById(containerId);
-
-      container.innerHTML = "";
-      partLabels[orderNumber] = {};
-
-      if (parts.length === 0) {
-        container.innerHTML = `<span class="muted">No parts</span>`;
-        return;
-      }
-
-      const selectedStillExists = parts.some(part =>
-        String(part.id) === String(selectedParts[orderNumber])
-      );
-
-      if (!selectedStillExists && currentStepNeedsPart()) {
-        const firstOpenPart = parts.find(part => {
-          const status = getPartStatus(part);
-          return status !== "DONE" && status !== "BLOCKED";
-        });
-        selectedParts[orderNumber] = firstOpenPart?.id || null;
-      }
-
-      parts.forEach(part => {
-        const status = getPartStatus(part);
-        const label = `${formatVariant(part.variant)} (${part.part_quantity ?? "?"})`;
-        const runs = part.runs ?? "?";
-
-        partLabels[orderNumber][part.id] = label;
-
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "part-btn";
-
-        if (String(selectedParts[orderNumber]) === String(part.id)) {
-          btn.classList.add("selected");
-        }
-
-        if (status === "ACTIVE") {
-          btn.classList.add("active");
-        }
-
-        if (status === "DONE") {
-          btn.classList.add("done");
-          btn.disabled = true;
-        }
-
-        if (status === "BLOCKED") {
-          btn.classList.add("blocked");
-          btn.disabled = true;
-        }
-
-        btn.innerHTML = `
-          <span>${escapeHtml(runs)} X ${escapeHtml(label)}pcs</span>
-          <span class="part-status">
-            ${status === "DONE" ? "&#10003; done" : escapeHtml(status.toLowerCase())}
-          </span>
-        `;
-
-        btn.onclick = event => {
-          event.stopPropagation();
-
-          if (status === "DONE" || status === "BLOCKED") {
-            return;
-          }
-
-          selectPart(orderNumber, part.id, btn);
-        };
-
-        container.appendChild(btn);
-      });
-    } catch {
-      showError("Network error on PARTS");
-    }
-  }
-
   async function searchOrder() {
-    const orderNumber = document.getElementById("searchOrderInput").value;
+    const orderNumber =
+      document.getElementById("searchOrderInput").value;
 
     if (!orderNumber) {
       loadOrders();
@@ -763,16 +264,17 @@
         }
       });
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
 
       if (!res.ok) {
-        showError(data?.message || "Order not found");
+        showError(data.message || "Order not found");
         return;
       }
 
       renderOrders([data]);
+
     } catch {
-      showError("Network error on SEARCH");
+      showError("Search error");
     }
   }
 
@@ -784,16 +286,17 @@
         }
       });
 
-      const data = await res.json().catch(() => null);
+      const data = await res.json();
 
       if (!res.ok) {
-        showError(data?.message || "Error loading orders");
+        showError(data.message || "Error loading orders");
         return;
       }
 
-      renderOrders(data || []);
+      renderOrders(data);
+
     } catch {
-      showError("Network error on LOAD");
+      showError("Load error");
     }
   }
 

@@ -70,7 +70,12 @@ export const createOrder = async (productType: product_type) => {
         ...part,
         order_id: order.id
       }))
-    }); return order
+    });
+    const createdParts = await prisma.order_parts.findMany({
+      where: {
+        order_id: order.id
+      }
+  }); return { order, parts: createdParts }
 }
 
 export const createOrderWithLogs = async (productType: product_type, quantity: number ) => {

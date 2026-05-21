@@ -33,6 +33,7 @@ describe('GET /orders', () => {
 });
 
 describe('GET /orders/:orderNumber', () => {
+
   it('should return 404 if order not found', async () => {
     const { token } = await getAuthToken();
     const response = await request(app)
@@ -53,7 +54,7 @@ describe('GET /orders/:orderNumber', () => {
 
   it('should return 200 and the searched order if it exists', async () => {
     const { token } = await getAuthToken()
-    const { order_number } = await createOrder('hardcover_book');
+    const { order: {order_number} } = await createOrder('hardcover_book');
 
     const response = await request(app)
     .get(`/orders/${order_number}`)
@@ -125,6 +126,153 @@ describe('POST /orders', () => {
   
   expect(response.status).toBe(400);
   expect(response.body.message).toBe('Invalid product type');
+  });
+
+  it('should return 400 if quantity is empty', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+
+    customer: getRandomClient(),
+    numberOfPages: getRandomEvenPages(),
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Quantity is required');
+  });
+
+  it('should return 400 if customer is empty', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+
+    numberOfPages: getRandomEvenPages(),
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Customer is required');
+  });
+
+  it('should return 400 if number of pages is not even', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+    customer: getRandomClient(),
+    numberOfPages: 201,
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Number of pages must be even');
+  });
+
+  it('should return 400 if parts is not between  1 and 6 parts', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const parts = [{},{},{},{},{},{},{}]
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+    customer: getRandomClient(),
+    numberOfPages: getRandomEvenPages(),
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('You can add between 1 and 6 parts per order');
+  });
+
+  it('should return 400 if variant is not one of: V4, V8, V16, V24, V32, V64', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const parts = [{ variant: 'wrongVariant', runs: getRandomRun(), part_quantity: getRandomQuantity() }]
+ 
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+    customer: getRandomClient(),
+    numberOfPages: getRandomEvenPages(),
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('variant must be one of: V4, V8, V16, V24, V32, V64');
+  });
+
+  it('should return 400 if runs are not between 1 and 100', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const parts = [{ variant: getRandomVariant(), runs: 101, part_quantity: getRandomQuantity() }]
+ 
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+    customer: getRandomClient(),
+    numberOfPages: getRandomEvenPages(),
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Signatures must be between 1 and 100');
+  });
+
+  it('should return 400 if part quantity is not between 1 and 1000000', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const parts = [{ variant: getRandomVariant(), runs: getRandomRun(), part_quantity: -1 }]
+ 
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: 14452,
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+    customer: getRandomClient(),
+    numberOfPages: getRandomEvenPages(),
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Part quantity must be between 1 and 1000000');
   });
 
   it('should return 401 if user is not logged', async () => {

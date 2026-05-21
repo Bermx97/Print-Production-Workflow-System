@@ -13,7 +13,6 @@ import { getOrderState } from './workflow/state/orderState.service';
 
 export const getOrders = async (req: Request, res: Response) => {
   const orders = await getAllOrdersService();
-  console.log(orders)
   return res.status(200).json(orders);
 };
 
