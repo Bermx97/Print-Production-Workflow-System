@@ -6,7 +6,9 @@ import { assertRoleCanAccessStep } from './roleGuard';
 import { stepScope } from '../orders.workflow';
 
 
-export const READY_STATUSES = ['active', 'done'] as const;
+export const READY_STATUSES = ['active', 'paused', 'done'] as const;
+export const IN_PROGRESS_STATUSES = ['active', 'paused'] as const;
+export const BLOCK_START_STATUSES = ['active', 'paused', 'done'] as const;
 
 
 export const getScope = (step: string) => stepScope[step as WorkflowStep];

@@ -3,7 +3,7 @@ import { OrderStatusV2 } from "../../../../types/orderStatus";
 import { stepScope } from "../../orders.workflow";
 import { WorkflowStep } from "../../../../types/orderStatus";
 import { step_name } from "@prisma/client";
-import { READY_STATUSES } from "../../domain/workflowContext";
+import { BLOCK_START_STATUSES, READY_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
 
 
@@ -23,7 +23,7 @@ export const findCurrentExecution = async (ctx: {
       order_id: order.id,
       step_type: step,
       status: {
-        in: [...READY_STATUSES]
+        in: [...BLOCK_START_STATUSES]
       },
 
       ...(scope === 'per_part'
@@ -61,5 +61,18 @@ export const isStepStartedOrDone = async (ctx: { orderId: string; step: step_nam
   return Boolean(
     execution &&
     READY_STATUSES.includes(execution.status as any)
+  );
+};
+
+export const hasStartedOrFinishedExecution = async (ctx: {
+  orderId: string;
+  step: step_name;
+  orderPartId?: string | null;
+}) => {
+  const execution = await getLatestExecution(ctx);
+
+  return Boolean(
+    execution &&
+    BLOCK_START_STATUSES.includes(execution.status as any)
   );
 };

@@ -4,7 +4,7 @@ import { HttpError } from '../../utils/errors';
 import prisma from '../../lib/prisma';
 import { roleStatusMap, getWorkflow as getWorkflowSequence, stepScope } from './orders.workflow';
 import { employee_role } from '@prisma/client';
-import { getWorkflowMap, READY_STATUSES, getScope } from './domain/workflowContext';
+import { getWorkflowMap, IN_PROGRESS_STATUSES, BLOCK_START_STATUSES, getScope } from './domain/workflowContext';
 import { canStartStepForPart } from './workflow/rules/dependency.rules';
 import { getLatestExecution } from './workflow/queries/execution.queries';
 import { getRoleSteps } from './workflow/access/role.access';
@@ -20,14 +20,22 @@ export const getOrderByNumber = async (req: Request, res: Response) => {
   const { orderNumber } = req.params;
 
   const order = await getOrderService(Number(orderNumber));
+  const wf = getWorkflowMap(order.product_type);
 
   if (!order) {
     return res.status(404).json({ message: 'Order not found'  });
   }
 
+  if (!wf) {
+    throw new HttpError('Workflow not found', 500);
+  }
+
+  const state = await getOrderState(order, wf);
+
   return res.status(200).json({
     ...order,
-    workflow: getWorkflowSequence(order.product_type)
+    workflow: getWorkflowSequence(order.product_type),
+    state
   });
 };
 
@@ -85,6 +93,36 @@ export const endStepV2 = async (req: Request, res: Response) => {
   return res.json(result);
 };
 
+export const pauseStepV2 = async (req: Request, res: Response) => {
+  const { orderPartId } = req.body;
+
+  const result =
+    await createStepEventV2(
+      Number(req.params.orderNumber),
+      req.user.id,
+      req.user.role,
+      'PAUSE',
+      orderPartId
+    );
+
+  return res.json(result);
+};
+
+export const resumeStepV2 = async (req: Request, res: Response) => {
+  const { orderPartId } = req.body;
+
+  const result =
+    await createStepEventV2(
+      Number(req.params.orderNumber),
+      req.user.id,
+      req.user.role,
+      'RESUME',
+      orderPartId
+    );
+
+  return res.json(result);
+};
+
 
 
 export const getVisibleOrdersV2 = async (req: Request, res: Response) => {
@@ -129,7 +167,7 @@ export const getVisibleOrdersV2 = async (req: Request, res: Response) => {
               orderPartId: part.id
             });
 
-            if (latestExecution?.status === 'active') {
+            if (latestExecution && IN_PROGRESS_STATUSES.includes(latestExecution.status as any)) {
               return {
                 ...order,
                 state
@@ -159,7 +197,7 @@ export const getVisibleOrdersV2 = async (req: Request, res: Response) => {
           step
         });
 
-        if (latestExecution?.status === 'active') {
+        if (latestExecution && IN_PROGRESS_STATUSES.includes(latestExecution.status as any)) {
           return {
             ...order,
             state
@@ -230,7 +268,7 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
         orderPartId: part.id
       });
 
-      if (execution?.status === 'active' || execution?.status === 'done') {
+      if (execution && BLOCK_START_STATUSES.includes(execution.status as any)) {
         return {
           ...part,
           step,

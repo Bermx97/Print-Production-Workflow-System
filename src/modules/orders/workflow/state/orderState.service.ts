@@ -1,7 +1,7 @@
 import { WorkflowMap, OrderStatus } from "../../../../types/orderStatus";
 import prisma from "../../../../lib/prisma";
 import { step_name } from "@prisma/client";
-import { READY_STATUSES } from "../../domain/workflowContext";
+import { BLOCK_START_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
 
 export const getOrderState = async (order: any, wf: WorkflowMap) => {
@@ -21,7 +21,7 @@ export const getOrderState = async (order: any, wf: WorkflowMap) => {
             in: partIds
           },
           status: {
-            in: [...READY_STATUSES]
+            in: [...BLOCK_START_STATUSES]
           }
         },
         select: {
@@ -32,6 +32,8 @@ export const getOrderState = async (order: any, wf: WorkflowMap) => {
 
       if (executions.some((execution) => execution.status === 'active')) {
         state[step] = 'ACTIVE';
+      } else if (executions.some((execution) => execution.status === 'paused')) {
+        state[step] = 'PAUSED';
       } else if (
         partIds.length > 0 &&
         partIds.every((partId: string) =>
@@ -55,7 +57,7 @@ export const getOrderState = async (order: any, wf: WorkflowMap) => {
         order_id: order.id,
         step_type: step as step_name,
         status: {
-          in: [...READY_STATUSES]
+          in: [...BLOCK_START_STATUSES]
         }
       },
       orderBy: {
@@ -65,6 +67,8 @@ export const getOrderState = async (order: any, wf: WorkflowMap) => {
 
     if (execution?.status === 'active') {
       state[step] = 'ACTIVE';
+    } else if (execution?.status === 'paused') {
+      state[step] = 'PAUSED';
     } else if (execution?.status === 'done') {
       state[step] = 'DONE';
     } else {

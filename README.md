@@ -147,4 +147,32 @@ A step can only start if:
 <img width="299" height="879" alt="image" src="https://github.com/user-attachments/assets/762828d4-d287-47d8-ab42-12c3d5e2ed93" />
 <img width="261" height="325" alt="image" src="https://github.com/user-attachments/assets/326886e1-120c-4f81-b9d9-3e94878ee1e2" />
 
+## Seed Generator
+
+The project includes a workflow-aware seed generator that creates random orders with:
+
+- valid `order_parts`
+- valid `step_execution`
+- valid `step_logs`
+- random `active`, `paused`, and `done` states
+- workflow dependencies respected for every scope (`per_part`, `aggregated`, `per_order`)
+
+Usage:
+
+```bash
+npm run seed:orders -- --count 25
+```
+
+Append 250 random orders:
+
+```bash
+npm run seed:orders -- --count 250
+```
+
+Reset orders and employees first, then seed 250 fresh orders:
+
+```bash
+npm run seed:orders -- --count 250 --reset
+```
+
 

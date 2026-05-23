@@ -206,6 +206,235 @@ describe('createStepEventV2', () => {
   expect(executions.length).toBe(1);
 });
 
+  it('should pause active printing step', async () => {
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    );
+
+    const result = await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'PAUSE',
+      orderPartId
+    );
+
+    expect(result).toBeDefined();
+
+    const execution = await prisma.step_execution.findFirst({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_type: 'printing'
+      }
+    });
+
+    const log = await prisma.step_logs.findFirst({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_name: 'printing',
+        event_type: 'PAUSE'
+      }
+    });
+
+    expect(execution?.status).toBe('paused');
+    expect(log).not.toBeNull();
+  });
+
+  it('should resume paused printing step', async () => {
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    );
+
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'PAUSE',
+      orderPartId
+    );
+
+    const result = await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'RESUME',
+      orderPartId
+    );
+
+    expect(result).toBeDefined();
+
+    const execution = await prisma.step_execution.findFirst({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_type: 'printing'
+      }
+    });
+
+    const log = await prisma.step_logs.findFirst({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_name: 'printing',
+        event_type: 'RESUME'
+      }
+    });
+
+    expect(execution?.status).toBe('active');
+    expect(log).not.toBeNull();
+  });
+
+  it('should allow folding after printing paused', async () => {
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    );
+
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'PAUSE',
+      orderPartId
+    );
+
+    const { user: folding } = await getAuthToken('folding_operator');
+
+    const result = await createStepEventV2(
+      order.order_number,
+      folding.id,
+      folding.role,
+      'START',
+      orderPartId
+    );
+
+    expect(result).toBeDefined();
+
+    const execution = await prisma.step_execution.findFirst({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_type: 'folding'
+      }
+    });
+
+    expect(execution?.status).toBe('active');
+  });
+
+  it('should not allow ending folding while printing is paused', async () => {
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    );
+
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'PAUSE',
+      orderPartId
+    );
+
+    const { user: folding } = await getAuthToken('folding_operator');
+
+    await createStepEventV2(
+      order.order_number,
+      folding.id,
+      folding.role,
+      'START',
+      orderPartId
+    );
+
+    await expect(
+      createStepEventV2(
+        order.order_number,
+        folding.id,
+        folding.role,
+        'END',
+        orderPartId,
+        100
+      )
+    ).rejects.toThrow('Previous step printing is not done for this variant');
+  });
+
+  it('should resume paused step on START', async () => {
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    );
+
+    await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'PAUSE',
+      orderPartId
+    );
+
+    const result = await createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    );
+
+    expect(result).toBeDefined();
+
+    const execution = await prisma.step_execution.findFirst({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_type: 'printing'
+      }
+    });
+
+    const lastLog = await prisma.step_logs.findFirst({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_name: 'printing'
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+
+    expect(execution?.status).toBe('active');
+    expect(lastLog?.event_type).toBe('RESUME');
+  });
+
+  it('should not pause step before start', async () => {
+    await expect(
+      createStepEventV2(
+        order.order_number,
+        printerId,
+        printerRole,
+        'PAUSE',
+        orderPartId
+      )
+    ).rejects.toThrow('No active execution found');
+  });
+
     it('should finish printing step', async () => {
     await createStepEventV2(
         order.order_number,

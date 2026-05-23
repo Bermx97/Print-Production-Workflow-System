@@ -6,7 +6,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.ts",
-    "test": "cross-env cross-env NODE_ENV=test jest"
+    "test": "cross-env cross-env NODE_ENV=test jest",
+    "seed:orders": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",

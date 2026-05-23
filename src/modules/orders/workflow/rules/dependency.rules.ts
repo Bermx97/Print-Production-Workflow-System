@@ -1,7 +1,7 @@
 import { step_name } from "@prisma/client";
 import { HttpError } from "../../../../utils/errors";
 import { READY_STATUSES } from "../../domain/workflowContext";
-import { isStepStartedOrDone, findCurrentExecution } from "../queries/execution.queries";
+import { isStepStartedOrDone, findCurrentExecution, hasStartedOrFinishedExecution } from "../queries/execution.queries";
 import { OrderStatus, WorkflowMap, OrderStatusV2, WorkflowStep } from "../../../../types/orderStatus";
 import prisma from "../../../../lib/prisma";
 import { getScope, getStepDependencies } from "../../domain/workflowContext";
@@ -20,7 +20,7 @@ export const canStartStepForPart = async (ctx: {
   const { order, wf, step, orderPartId } = ctx;
   const scope = getScope(step);
 
-  const alreadyStartedOrDone = await isStepStartedOrDone({
+  const alreadyStartedOrDone = await hasStartedOrFinishedExecution({
     orderId: order.id,
     step,
     orderPartId
@@ -123,6 +123,10 @@ export const validateStepCanStart = async (ctx: {
     throw new HttpError('Step already done', 409);
   }
 
+  if (currentExecution?.status === 'paused') {
+    throw new HttpError('Step is paused. Resume it instead', 409);
+  }
+
   const dependencies = getStepDependencies(order, step);
 
   if (scope === 'per_part') {
@@ -138,9 +142,9 @@ export const validateStepCanStart = async (ctx: {
         }
       });
 
-      if (!dependencyExecution) {
+        if (!dependencyExecution) {
         throw new HttpError(
-          `Cannot start ${step}. Variant has not started or finished ${dependencyStep}`,
+          `Cannot start ${step}. Variant has not started, paused or finished ${dependencyStep}`,
           409
         );
       }
@@ -177,9 +181,9 @@ export const validateStepCanStart = async (ctx: {
         readyPartIds.has(part.id)
       );
 
-      if (!allVariantsReady) {
+        if (!allVariantsReady) {
         throw new HttpError(
-          `Cannot start ${step}. All variants must be active or done in ${dependencyStep}`,
+          `Cannot start ${step}. All variants must be active, paused or done in ${dependencyStep}`,
           409
         );
       }
@@ -221,7 +225,7 @@ export const validateStepCanStart = async (ctx: {
 
         if (!allVariantsReady) {
           throw new HttpError(
-            `Cannot start ${step}. All variants must be active or done in ${dependencyStep}`,
+            `Cannot start ${step}. All variants must be active, paused or done in ${dependencyStep}`,
             409
           );
         }
@@ -241,7 +245,7 @@ export const validateStepCanStart = async (ctx: {
 
       if (!dependencyExecution) {
         throw new HttpError(
-          `Cannot start ${step}. Previous step ${dependencyStep} is not active or done`,
+          `Cannot start ${step}. Previous step ${dependencyStep} is not active, paused or done`,
           409
         );
       }

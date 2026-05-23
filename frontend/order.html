@@ -42,7 +42,6 @@
       margin-top: 10px;
       border-radius: 6px;
       border: 1px solid #222;
-      
     }
 
     button {
@@ -61,7 +60,6 @@
     button:hover {
       background: #c90000;
     }
-
   </style>
 </head>
 
@@ -83,24 +81,24 @@ const orderNumber = params.get("orderNumber");
 
 if (!token) window.location.href = "/login.html";
 
-function buildStateFromLogs(logs, workflow) {
-  const state = {};
+function normalizeStatus(value) {
+  if (!value) return "";
 
-  workflow.forEach(step => {
-    const hasStart = logs.some(l =>
-      l.step_name === step && l.event_type === "START"
-    );
+  const status = String(value).toUpperCase();
 
-    const hasEnd = logs.some(l =>
-      l.step_name === step && l.event_type === "END"
-    );
+  if (status === "END" || status === "FINISHED" || status === "COMPLETED") {
+    return "DONE";
+  }
 
-    if (hasEnd) state[step] = "DONE";
-    else if (hasStart) state[step] = "ACTIVE";
-    else state[step] = "NOT_STARTED";
-  });
+  if (status === "START" || status === "IN_PROGRESS" || status === "RESUME") {
+    return "ACTIVE";
+  }
 
-  return state;
+  if (status === "PAUSE" || status === "PAUSED") {
+    return "PAUSED";
+  }
+
+  return status;
 }
 
 async function loadOrder() {
@@ -116,11 +114,9 @@ async function loadOrder() {
 
   const analytics = await analyticsRes.json();
 
-  const logs = order.step_logs || [];
   const workflow = order.workflow || [];
   const quantities = order.step_quantities || {};
-
-  const state = buildStateFromLogs(logs, workflow);
+  const state = order.state || {};
 
   const card = document.getElementById("card");
 
@@ -143,19 +139,23 @@ async function loadOrder() {
     <div class="label">Workflow</div>
     <div class="value">
       ${workflow.map(step => {
-
         const status = state[step];
 
-        let icon = "⏳";
+        let icon = "&#9898;";
         let color = "#94a3b8";
 
         if (status === "ACTIVE") {
-          icon = "🟡";
+          icon = "&#128993;";
           color = "#ffcc00";
         }
 
+        if (status === "PAUSED") {
+          icon = "&#9208;";
+          color = "#38bdf8";
+        }
+
         if (status === "DONE") {
-          icon = "✔";
+          icon = "&#10004;";
           color = "#4caf50";
         }
 

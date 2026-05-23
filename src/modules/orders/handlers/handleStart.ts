@@ -3,15 +3,15 @@ import { ProductType } from '../../../types/orderStatus';
 import { OrderStatus } from '../../../types/orderStatus';
 import { HttpError } from '../../../utils/errors';
 import { assertRoleCanAccessStep } from '../domain/roleGuard';
+import { READY_STATUSES } from '../domain/workflowContext';
 import { stepScope, workflow } from '../orders.workflow';
-
-const READY_STATUSES = ['active', 'done'] as const;
+import { employee_role } from '@prisma/client';
 
 export const handleStart = async (ctx: {
   tx: any;
   order: any;
   userId: string;
-  role: any;
+  role: employee_role;
   step: OrderStatusV2;
   orderPartId: string;
 }) => {
@@ -67,7 +67,7 @@ export const handleStart = async (ctx: {
 
       if (!allVariantsReady) {
         throw new HttpError(
-          `Cannot start ${step} until all variants in ${dependencyStep} are active or done`,
+          `Cannot start ${step} until all variants in ${dependencyStep} are active, paused or done`,
           409
         );
       }

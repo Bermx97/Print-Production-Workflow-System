@@ -160,6 +160,27 @@ export const handleEnd = async (ctx: {
   });
 
   if (!execution) {
+    const latestExecution = await tx.step_execution.findFirst({
+      where: {
+        order_id: order.id,
+        step_type: activeStep,
+        ...(scope === 'per_part'
+          ? { order_part_id: orderPartId }
+          : { order_part_id: null })
+      },
+      orderBy: {
+        started_at: 'desc'
+      }
+    });
+
+    if (latestExecution?.status === 'paused') {
+      throw new HttpError('Step is paused. Resume it before ending', 409);
+    }
+
+    if (latestExecution?.status === 'done') {
+      throw new HttpError('Step already done', 409);
+    }
+
     throw new HttpError('No active execution found', 409);
   }
 

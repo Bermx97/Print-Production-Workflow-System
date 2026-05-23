@@ -72,6 +72,15 @@
       border-color: #ff2a2a;
     }
 
+    .warning {
+      background: #f59e0b;
+      color: #111;
+    }
+
+    .warning:hover {
+      background: #d97706;
+    }
+
     .back-btn {
       background: #ff2a2a;
     }
@@ -186,6 +195,12 @@
       border-color: #4caf50;
       color: #9be49f;
       background: #122015;
+    }
+
+    .part-btn.paused {
+      border-color: #38bdf8;
+      color: #7dd3fc;
+      background: #0b1a24;
     }
 
     .part-btn.blocked {
@@ -415,6 +430,14 @@
       return "ACTIVE";
     }
 
+    if (status === "PAUSE" || status === "PAUSED") {
+      return "PAUSED";
+    }
+
+    if (status === "RESUME") {
+      return "ACTIVE";
+    }
+
     return status;
   }
 
@@ -504,39 +527,68 @@
     button.classList.add("selected");
   }
 
-  async function startStep(orderNumber) {
-    const orderPartId = selectedParts[orderNumber] || null;
+  function getSelectedPartId(orderNumber) {
+    return selectedParts[orderNumber] || null;
+  }
+
+  function ensureSelectedPart(orderNumber) {
+    const orderPartId = getSelectedPartId(orderNumber);
 
     if (currentStepNeedsPart() && !orderPartId) {
       showError("Select variant first");
-      return;
+      return null;
     }
 
+    return orderPartId;
+  }
+
+  async function sendStepAction(orderNumber, action, body, errorLabel) {
     try {
-      const res = await fetch(`${API}/${orderNumber}/start`, {
+      const res = await fetch(`${API}/${orderNumber}/${action}`, {
         method: "POST",
         headers: AUTH_HEADER,
-        body: JSON.stringify({ orderPartId })
+        body: JSON.stringify(body)
       });
 
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        showError(data?.message || "Error on START");
-        return;
+        showError(data?.message || `Error on ${errorLabel}`);
+        return false;
       }
 
       loadOrder();
+      return true;
     } catch {
-      showError("Network error on START");
+      showError(`Network error on ${errorLabel}`);
+      return false;
     }
   }
 
-  function openModal(orderNumber) {
-    const orderPartId = selectedParts[orderNumber] || null;
+  async function startStep(orderNumber) {
+    const orderPartId = ensureSelectedPart(orderNumber);
 
     if (currentStepNeedsPart() && !orderPartId) {
-      showError("Select variant first");
+      return;
+    }
+
+    await sendStepAction(orderNumber, "start", { orderPartId }, "START");
+  }
+
+  async function pauseStep(orderNumber) {
+    const orderPartId = ensureSelectedPart(orderNumber);
+
+    if (currentStepNeedsPart() && !orderPartId) {
+      return;
+    }
+
+    await sendStepAction(orderNumber, "pause", { orderPartId }, "PAUSE");
+  }
+
+  function openModal(orderNumber) {
+    const orderPartId = ensureSelectedPart(orderNumber);
+
+    if (currentStepNeedsPart() && !orderPartId) {
       return;
     }
 
@@ -592,54 +644,17 @@
     }
   }
 
-  function renderState(stepLogs, workflow) {
-    if (!Array.isArray(stepLogs)) {
-      stepLogs = [];
+  function renderState(state, workflow) {
+    if (!state || typeof state !== "object") {
+      state = {};
     }
 
     if (!Array.isArray(workflow)) {
       workflow = [];
     }
 
-    const stepStats = {};
-    
-    stepLogs.forEach(log => {
-      const stepName = log.step_name || "unknown";
-      const partId = log.order_part_id || "unknown";
-      const eventType = log.event_type || "UNKNOWN";
-      
-      if (!stepStats[stepName]) {
-        stepStats[stepName] = {};
-      }
-      
-      stepStats[stepName][partId] = eventType;
-    });
-
     return workflow.map(step => {
-      const partMap = stepStats[step];
-      
-      let status = "AVAILABLE";
-      
-      if (partMap) {
-        const partIds = Object.keys(partMap);
-        const done = partIds.filter(partId => 
-          normalizeStatus(partMap[partId]) === "DONE"
-        ).length;
-        
-        if (done === partIds.length && partIds.length > 0) {
-          status = "DONE";
-        }
-        else if (partIds.some(partId => 
-          normalizeStatus(partMap[partId]) === "ACTIVE"
-        )) {
-          status = "ACTIVE";
-        }
-        else if (partIds.length > 0) {
-          status = "IN_PROGRESS";
-        }
-      }
-      
-      const normalized = normalizeStatus(status);
+      const normalized = normalizeStatus(state[step] || "WAITING");
 
       let icon = "&#9898;";
       let color = "#94a3b8";
@@ -647,6 +662,11 @@
       if (normalized === "ACTIVE") {
         icon = "&#128993;";
         color = "#ffcc00";
+      }
+
+      if (normalized === "PAUSED") {
+        icon = "&#9208;";
+        color = "#38bdf8";
       }
 
       if (normalized === "DONE") {
@@ -687,7 +707,7 @@
         </div>
 
         <div class="steps">
-          ${renderState(order.step_logs, order.workflow)}
+          ${renderState(order.state, order.workflow)}
         </div>
 
         ${showParts
@@ -702,6 +722,10 @@
         <div class="actions">
           <button onclick="startStep(${order.order_number})">
             START
+          </button>
+
+          <button class="warning" onclick="pauseStep(${order.order_number})">
+            PAUSE
           </button>
 
           <button class="secondary" onclick="openModal(${order.order_number})">
@@ -773,6 +797,10 @@
 
         if (status === "ACTIVE") {
           btn.classList.add("active");
+        }
+
+        if (status === "PAUSED") {
+          btn.classList.add("paused");
         }
 
         if (status === "DONE") {

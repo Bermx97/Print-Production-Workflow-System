@@ -6,8 +6,11 @@ import { roleStatusMap, workflow } from './orders.workflow';
 import { OrderStatusV2, WorkflowV2, WorkflowProductType, WorkflowStep, EventType } from "../../types/orderStatus"
 import { handleEnd } from './handlers/handleEnd';
 import { handleStart } from './handlers/handleStart';
+import { handlePause } from './handlers/handlePause';
+import { handleResume } from './handlers/handleResume';
 import { getWorkflow, getStepFromRole, getStepDependencies } from './domain/workflowContext';
 import { validateStepCanStart } from './workflow/rules/dependency.rules';
+import { findCurrentExecution } from './workflow/queries/execution.queries';
 
 type CreateOrderData = Prisma.orderCreateInput;
 
@@ -24,7 +27,8 @@ export const getOrderService = async (orderNumber: number) => {
             order_number: orderNumber
         },
         include: {
-          step_logs: true
+          step_logs: true,
+          order_parts: true
         }
     });
     if (!order) {
@@ -109,6 +113,16 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
 
     if (eventType === 'START') {
       const step = getStepFromRole(wf, role);
+      const currentExecution = await findCurrentExecution({
+        tx,
+        order,
+        step,
+        orderPartId
+      });
+
+      if (currentExecution?.status === 'paused') {
+        return handleResume({ tx, order, userId, role, orderPartId });
+      }
 
       await validateStepCanStart({ tx, order, role, step,orderPartId });
 
@@ -121,6 +135,14 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
       }
 
       return handleEnd({ tx, order, userId, role, wf, stepQuantity, orderPartId });
+    }
+
+    if (eventType === 'PAUSE') {
+      return handlePause({ tx, order, userId, role, orderPartId });
+    }
+
+    if (eventType === 'RESUME') {
+      return handleResume({ tx, order, userId, role, orderPartId });
     }
 
     throw new HttpError('Invalid event type', 400);
