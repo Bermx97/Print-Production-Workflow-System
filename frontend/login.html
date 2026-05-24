@@ -109,6 +109,7 @@
       const data = await res.json();
 
       localStorage.setItem("token", data.token);
+      localStorage.setItem("login", data.user.login);
 
       window.location.href = "/index.html";
     }

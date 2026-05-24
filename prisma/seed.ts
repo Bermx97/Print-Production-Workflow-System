@@ -1,20 +1,9 @@
+import { PrismaClient, Variant, employee_role, product_type } from '@prisma/client';
+import bcrypt from 'bcrypt';
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
-import bcrypt from 'bcrypt';
-import {
-  PrismaClient,
-  Variant,
-  employee_role,
-  product_type,
-} from '@prisma/client';
-import {
-  getWorkflow,
-  stepScope,
-  workflow,
-} from '../src/modules/orders/orders.workflow';
+import { getWorkflow, stepScope, workflow, } from '../src/modules/orders/orders.workflow';
 import { OrderStatus } from '../src/types/orderStatus';
-
-
 
 
 const prisma = new PrismaClient();
@@ -33,12 +22,12 @@ const LOGIN_MAP: Record<employee_role, string> = {
   printer_operator: 'printer',
   folding_operator: 'folding',
   sewing_operator: 'sewing',
-  case_maker: 'case',
+  case_maker: 'casemaker',
   hardcover_binder_operator: 'hardcover',
   perfect_bound_operator: 'perfect',
-  stitching_operator: 'stitch',
+  stitching_operator: 'stitching',
   seller: 'seller',
-  technologist: 'tech',
+  technologist: 'techno',
 };
 
 const STEP_ROLE_MAP: Record<OrderStatus, employee_role> = {
@@ -274,31 +263,31 @@ function chooseStatus(ctx: {
   if (drift > 0.15) {
     return canFinish
       ? weightedPick<SeedExecutionStatus>([
-          ['done', 0.28],
-          ['active', 0.34],
-          ['paused', 0.2],
-          ['not_started', 0.18],
-        ])
+        ['done', 0.28],
+        ['active', 0.34],
+        ['paused', 0.2],
+        ['not_started', 0.18],
+      ])
       : weightedPick<SeedExecutionStatus>([
-          ['active', 0.48],
-          ['paused', 0.26],
-          ['not_started', 0.26],
-        ]);
+        ['active', 0.48],
+        ['paused', 0.26],
+        ['not_started', 0.26],
+      ]);
   }
 
   if (drift > -0.15) {
     return canFinish
       ? weightedPick<SeedExecutionStatus>([
-          ['done', 0.12],
-          ['active', 0.34],
-          ['paused', 0.2],
-          ['not_started', 0.34],
-        ])
+        ['done', 0.12],
+        ['active', 0.34],
+        ['paused', 0.2],
+        ['not_started', 0.34],
+      ])
       : weightedPick<SeedExecutionStatus>([
-          ['active', 0.34],
-          ['paused', 0.2],
-          ['not_started', 0.46],
-        ]);
+        ['active', 0.34],
+        ['paused', 0.2],
+        ['not_started', 0.46],
+      ]);
   }
 
   return weightedPick<SeedExecutionStatus>([
@@ -388,7 +377,7 @@ function buildTimeline(ctx: {
     const resumedAtMs = pausedAtMs + randInt(10, 120) * MINUTE_MS;
     const finishedAtMs = Math.max(
       resumedAtMs +
-        Math.max(20, Math.floor(durationMinutes * randFloat(0.35, 0.85))) * MINUTE_MS,
+      Math.max(20, Math.floor(durationMinutes * randFloat(0.35, 0.85))) * MINUTE_MS,
       doneAtMinMs + randInt(10, 90) * MINUTE_MS
     );
 

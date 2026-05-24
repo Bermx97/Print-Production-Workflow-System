@@ -1,13 +1,13 @@
-import { Request, Response } from 'express';
-import { createOrderService, getAllOrdersService, getOrderService, createStepEventV2 } from './orders.service';
-import { HttpError } from '../../utils/errors';
-import prisma from '../../lib/prisma';
-import { roleStatusMap, getWorkflow as getWorkflowSequence, stepScope } from './orders.workflow';
 import { employee_role } from '@prisma/client';
-import { getWorkflowMap, IN_PROGRESS_STATUSES, BLOCK_START_STATUSES, getScope } from './domain/workflowContext';
-import { canStartStepForPart } from './workflow/rules/dependency.rules';
-import { getLatestExecution } from './workflow/queries/execution.queries';
+import { Request, Response } from 'express';
+import prisma from '../../lib/prisma';
+import { HttpError } from '../../utils/errors';
+import { BLOCK_START_STATUSES, getScope, getWorkflowMap, IN_PROGRESS_STATUSES } from './domain/workflowContext';
+import { createOrderService, createStepEventV2, getAllOrdersService, getOrderPartsService, getOrderService } from './orders.service';
+import { getWorkflow as getWorkflowSequence, roleStatusMap } from './orders.workflow';
 import { getRoleSteps } from './workflow/access/role.access';
+import { getLatestExecution } from './workflow/queries/execution.queries';
+import { canStartStepForPart } from './workflow/rules/dependency.rules';
 import { getOrderState } from './workflow/state/orderState.service';
 
 
@@ -23,7 +23,7 @@ export const getOrderByNumber = async (req: Request, res: Response) => {
   const wf = getWorkflowMap(order.product_type);
 
   if (!order) {
-    return res.status(404).json({ message: 'Order not found'  });
+    return res.status(404).json({ message: 'Order not found' });
   }
 
   if (!wf) {
@@ -225,11 +225,12 @@ export const getVisibleOrdersV2 = async (req: Request, res: Response) => {
   return res.json(result.filter(Boolean));
 };
 
+
 export const getOrderPartsV2 = async (req: Request, res: Response) => {
   const role = req.user.role as employee_role;
   const orderNumber = Number(req.params.orderNumber);
 
-  const order = await prisma.order.findFirst({
+  const order = await prisma.order.findUnique({
     where: {
       order_number: orderNumber
     },
@@ -247,7 +248,6 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
   if (!wf) {
     throw new HttpError('Workflow not found', 500);
   }
-
   const roleSteps = getRoleSteps(role, wf);
   const step = roleSteps[0];
 
@@ -262,11 +262,18 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
 
   const parts = await Promise.all(
     order.order_parts.map(async (part) => {
-      const execution = await getLatestExecution({
-        orderId: order.id,
-        step,
-        orderPartId: part.id
+      const executions = await prisma.step_execution.findMany({
+        where: {
+          order_id: order.id,
+          step_type: step
+        }
       });
+
+      const executionMap = new Map(
+        executions.map(e => [e.order_part_id, e])
+      );
+
+      const execution = executionMap.get(part.id);
 
       if (execution && BLOCK_START_STATUSES.includes(execution.status as any)) {
         return {
@@ -280,16 +287,16 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
       const canStart =
         scope === 'per_part'
           ? await canStartStepForPart({
-              order,
-              wf,
-              step,
-              orderPartId: part.id
-            })
+            order,
+            wf,
+            step,
+            orderPartId: part.id
+          })
           : await canStartStepForPart({
-              order,
-              wf,
-              step
-            });
+            order,
+            wf,
+            step
+          });
 
       return {
         ...part,
@@ -302,4 +309,12 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
   return res.json({
     order_parts: parts
   });
+};
+
+
+export const getOrderParts = async (req: Request, res: Response) => {
+  const orderNumber = Number(req.params.orderNumber);
+  const parts = await getOrderPartsService(orderNumber);
+  console.log(parts)
+  return res.json({ parts: parts });
 };

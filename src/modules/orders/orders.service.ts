@@ -1,40 +1,59 @@
+import { employee_role, Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
-import { Prisma } from '@prisma/client';
+import { EventType, OrderStatusV2 } from "../../types/orderStatus";
 import { HttpError } from '../../utils/errors';
-import { employee_role, } from '@prisma/client';
-import { roleStatusMap, workflow } from './orders.workflow';
-import { OrderStatusV2, WorkflowV2, WorkflowProductType, WorkflowStep, EventType } from "../../types/orderStatus"
+import { getStepFromRole, getWorkflow } from './domain/workflowContext';
 import { handleEnd } from './handlers/handleEnd';
-import { handleStart } from './handlers/handleStart';
 import { handlePause } from './handlers/handlePause';
 import { handleResume } from './handlers/handleResume';
-import { getWorkflow, getStepFromRole, getStepDependencies } from './domain/workflowContext';
-import { validateStepCanStart } from './workflow/rules/dependency.rules';
+import { handleStart } from './handlers/handleStart';
+import { roleStatusMap, workflow } from './orders.workflow';
 import { findCurrentExecution } from './workflow/queries/execution.queries';
+import { validateStepCanStart } from './workflow/rules/dependency.rules';
 
 type CreateOrderData = Prisma.orderCreateInput;
 
 
 export const getAllOrdersService = async () => {
-    return await prisma.order.findMany({
-        orderBy: { due_date: 'asc' }
-    });
+  return await prisma.order.findMany({
+    orderBy: { due_date: 'asc' }
+  });
+};
+
+export const getOrderPartsService = async (orderNumber: number) => {
+  const order = await prisma.order.findUnique({
+    where: {
+      order_number: orderNumber
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!order) {
+    throw new HttpError('Order not found', 404);
+  };
+  return await prisma.order_parts.findMany({
+    where: {
+      order_id: order.id
+    }
+  });
 };
 
 export const getOrderService = async (orderNumber: number) => {
-    const order = await prisma.order.findUnique({
-        where: {
-            order_number: orderNumber
-        },
-        include: {
-          step_logs: true,
-          order_parts: true
-        }
-    });
-    if (!order) {
-        throw new HttpError('Order not found', 404);
-    };
-    return order
+  const order = await prisma.order.findUnique({
+    where: {
+      order_number: orderNumber
+    },
+    include: {
+      step_logs: true,
+      order_parts: true
+    }
+  });
+  if (!order) {
+    throw new HttpError('Order not found', 404);
+  };
+  return order
 };
 
 export const getMyOrdersService = async (userRole: employee_role) => {
@@ -86,14 +105,14 @@ export const getMyOrdersService = async (userRole: employee_role) => {
 
 export const createOrderService = async (data: CreateOrderData, partsData: Omit<Prisma.order_partsCreateManyInput, 'order_id'>[]) => {
 
-    const order = await prisma.order.create({ data });
-    await prisma.order_parts.createMany({
-      data: partsData.map(part => ({
-        ...part,
-        order_id: order.id
-      }))
-    });
-    return order
+  const order = await prisma.order.create({ data });
+  await prisma.order_parts.createMany({
+    data: partsData.map(part => ({
+      ...part,
+      order_id: order.id
+    }))
+  });
+  return order
 };
 
 
@@ -124,9 +143,9 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
         return handleResume({ tx, order, userId, role, orderPartId });
       }
 
-      await validateStepCanStart({ tx, order, role, step,orderPartId });
+      await validateStepCanStart({ tx, order, role, step, orderPartId });
 
-      return handleStart({tx, order, userId, role, step, orderPartId });
+      return handleStart({ tx, order, userId, role, step, orderPartId });
     }
 
     if (eventType === 'END') {
