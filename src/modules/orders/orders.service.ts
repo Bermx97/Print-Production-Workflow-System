@@ -56,6 +56,22 @@ export const getOrderService = async (orderNumber: number) => {
   return order
 };
 
+export const getOrderWithRelations = async (orderNumber: number) => {
+  const order = await prisma.order.findUnique({
+    where: { order_number: orderNumber },
+    include: {
+      order_parts: true,
+      step_execution: true,
+    },
+  });
+
+  if (!order) {
+    throw new HttpError('Order not found', 404);
+  };
+  
+  return order;
+};
+
 export const getMyOrdersService = async (userRole: employee_role) => {
   const access = roleStatusMap[userRole];
 

@@ -3,7 +3,7 @@ import { body } from 'express-validator';
 import { authorizeRoles } from '../../middlewares/authorizeRole';
 import { isAuthenticated } from '../../middlewares/isAuthenticated';
 import validateRequest from '../../middlewares/validateRequest';
-import { getAverageStepsSpeed } from './analytics.controller';
+import { getOrderStatsController } from './analytics.controller';
 import { createOrderValidation } from './order.validation';
 import { createOrder, endStepV2, getOrderByNumber, getOrderPartsV2, getOrders, getVisibleOrdersV2, pauseStepV2, resumeStepV2, startStepV2 } from './orders.controller';
 
@@ -15,9 +15,10 @@ const router = express.Router();
 
 router.get('/', isAuthenticated, getOrders);
 router.get('/my', isAuthenticated, getVisibleOrdersV2);
-router.get('/:orderNumber/analytics', isAuthenticated, getAverageStepsSpeed)
+//router.get('/:orderNumber/analytics',/* isAuthenticated,*/ doneByStepAndVariant)
 router.get('/:orderNumber/parts', isAuthenticated, getOrderPartsV2)
 router.get('/:orderNumber', isAuthenticated, getOrderByNumber);
+router.get('/:orderNumber/stats',isAuthenticated, getOrderStatsController);
 
 router.post('/:orderNumber/start', isAuthenticated, startStepV2);
 router.post('/:orderNumber/pause', isAuthenticated, pauseStepV2);
