@@ -116,7 +116,7 @@ export const createOrderService = async (data: CreateOrderData, partsData: Omit<
 };
 
 
-export const createStepEventV2 = async (orderNumber: number, userId: string, role: employee_role, eventType: EventType, orderPartId: string, stepQuantity?: number) => {
+export const createStepEventV2 = async (orderNumber: number, userId: string, role: employee_role, eventType: EventType, orderPartId: string, doneQuantity?: number) => {
   return prisma.$transaction(async (tx) => {
     const order = await tx.order.findFirst({
       where: {
@@ -149,11 +149,11 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
     }
 
     if (eventType === 'END') {
-      if (!stepQuantity) {
+      if (typeof doneQuantity !== 'number') {
         throw new HttpError('Step quantity required', 400);
       }
 
-      return handleEnd({ tx, order, userId, role, wf, stepQuantity, orderPartId });
+      return handleEnd({ tx, order, userId, role, wf, doneQuantity, orderPartId });
     }
 
     if (eventType === 'PAUSE') {

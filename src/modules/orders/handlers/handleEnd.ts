@@ -132,10 +132,10 @@ export const handleEnd = async (ctx: {
   userId: string;
   role: any;
   wf: Record<string, any>;
-  stepQuantity: number;
+  doneQuantity: number;
   orderPartId: string;
 }) => {
-  const { tx, order, userId, role, wf, stepQuantity, orderPartId } = ctx;
+  const { tx, order, userId, role, wf, doneQuantity, orderPartId } = ctx;
 
   const activeStep = getStepFromRole(wf, role);
   const scope = stepScope[activeStep as WorkflowStep];
@@ -208,7 +208,7 @@ export const handleEnd = async (ctx: {
     },
     data: {
       status: 'done',
-      done_quantity: stepQuantity,
+      done_quantity: doneQuantity,
       finished_at: new Date()
     }
   });

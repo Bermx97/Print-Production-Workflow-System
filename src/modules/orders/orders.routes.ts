@@ -23,7 +23,7 @@ router.post('/:orderNumber/start', isAuthenticated, startStepV2);
 router.post('/:orderNumber/pause', isAuthenticated, pauseStepV2);
 router.post('/:orderNumber/resume', isAuthenticated, resumeStepV2);
 router.post('/:orderNumber/end', isAuthenticated,
-    body('stepQuantity')
+    body('doneQuantity')
         .notEmpty()
         .withMessage('Step quantity is required')
         .isInt({ min: 1, max: 1000000 })

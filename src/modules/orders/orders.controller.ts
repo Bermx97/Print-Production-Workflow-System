@@ -78,7 +78,7 @@ export const startStepV2 = async (req: Request, res: Response) => {
 };
 
 export const endStepV2 = async (req: Request, res: Response) => {
-  const { stepQuantity, orderPartId } = req.body;
+  const { doneQuantity, orderPartId } = req.body;
 
   const result =
     await createStepEventV2(
@@ -87,7 +87,7 @@ export const endStepV2 = async (req: Request, res: Response) => {
       req.user.role,
       'END',
       orderPartId,
-      stepQuantity
+      doneQuantity
     );
 
   return res.json(result);

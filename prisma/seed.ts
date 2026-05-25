@@ -654,7 +654,7 @@ async function seedOrder(ctx: {
         quantity: orderQuantity,
         customer: pick(CLIENTS),
         number_of_pages: randomEvenPages(),
-        step_quantities: stepQuantities,
+        //step_quantities: stepQuantities,
       },
     });
 

@@ -115,7 +115,6 @@ async function loadOrder() {
   const analytics = await analyticsRes.json();
 
   const workflow = order.workflow || [];
-  const quantities = order.step_quantities || {};
   const state = order.state || {};
 
   const card = document.getElementById("card");
