@@ -91,8 +91,32 @@ The schema is designed around the core concepts of orders, employees, and the ev
 
 <img width="1557" height="880" alt="Full Database Schema" src="https://github.com/user-attachments/assets/3ed60985-4733-4dd9-a7d9-bf6b59f7ec23" />
 
-<img width="299" height="879" alt="Enums and Relations" src="https://github.com/user-attachments/assets/762828d4-d287-47d8-ab42-12c3d5e2ed93" />
-<img width="261" height="325" alt="Enums" src="https://github.com/user-attachments/assets/326886e1-120c-4f81-b9d9-3e94878ee1e2" />
+### Data Models & Enums
+The system uses the following enumerations to maintain data integrity across the workflow engine:
+
+<details>
+<summary><strong>Click to view all System Enums</strong></summary>
+
+#### Roles & Types
+| Enum | Values |
+| :--- | :--- |
+| **Employee Role** | `printer_operator`, `folding_operator`, `sewing_operator`, `case_maker`, `hardcover_binder_operator`, `perfect_bound_operator`, `stitching_operator`, `seller`, `technologist`, `admin` |
+| **Product Type** | `hardcover_book`, `perfect_bound_book`, `saddle_stitching` |
+
+#### Workflow & Execution
+| Enum | Values |
+| :--- | :--- |
+| **Step Name** | `printing`, `folding`, `sewing`, `case_making`, `folding_with_milling`, `hardcover_binding`, `binding`, `stitching` |
+| **Step Event** | `START`, `END`, `PAUSE`, `RESUME` |
+| **Execution Status**| `active`, `done`, `cancelled` |
+
+#### Configuration & Variants
+| Enum | Values |
+| :--- | :--- |
+| **Step Scope** | `per_part`, `aggregated`, `per_order` |
+| **Variant** | `V4`, `V8`, `V16`, `V24`, `V32`, `V64` |
+
+</details>
 
 ## Getting Started
 
