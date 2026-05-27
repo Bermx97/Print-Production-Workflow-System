@@ -1,8 +1,30 @@
 # Order Management API
 
-## Demo 
+## Demo & Live Access
 
 https://github.com/user-attachments/assets/447788ae-b8c0-4cfb-8464-60384f85ad4d
+
+ **Live Link (Hosted on Render):** [https://print-production-workflow-system.onrender.com](https://print-production-workflow-system.onrender.com)
+
+> ⚠️ **Note on Live Demo:** The API is deployed on Render's free tier. If the initial page load takes 30-50 seconds, it is simply the server waking up from its spin-down state. Once awake, performance will return to normal.
+
+### Demo Credentials (Test Accounts)
+
+To explore the application from the perspective of different system roles, you can use the following test accounts:
+
+| Employee Role | Login | Password |
+| :--- | :--- | :--- |
+| **Admin** | `adminn` | `adminn` |
+| **Worker (Printer)** | `printer` | `printer` |
+| **Worker (Folding)** | `folding` | `folding` |
+| **Worker (Sewing)** | `sewing` | `sewing` |
+| **Worker (Casemaking)** | `casemaker` | `casemaker` |
+| **Worker (Hardcover binding)** | `hardcover` | `hardcover` |
+| **Worker (Perfect Binding)** | `perfect` | `perfect` |
+| **Worker (Stitching)** | `stitching` | `stitching` |
+
+
+---
 
 ## Overview
 
@@ -78,12 +100,13 @@ A user can start a step only if:
 
 ## Tech Stack
 
--   **Backend**: Node.js, Express.js, TypeScript
--   **ORM**: Prisma
--   **Database**: PostgreSQL (Designed for NeonDB)
--   **Authentication**: JSON Web Tokens (JWT), bcrypt
--   **Validation**: express-validator
--   **Testing**: Jest, Supertest
+- **Backend:** Node.js, Express.js, TypeScript
+- **ORM:** Prisma
+- **Database:** PostgreSQL (Designed for NeonDB)
+- **Authentication:** JSON Web Tokens (JWT), bcrypt
+- **Validation:** express-validator
+- **Testing:** Jest, Supertest
+- **Deployment & Cloud:** Render (API), Neon (Database)
 
 ## Database Schema
 
