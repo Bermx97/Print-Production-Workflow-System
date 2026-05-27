@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import { HttpError } from '../../utils/errors';
 import { BLOCK_START_STATUSES, getScope, getWorkflowMap, IN_PROGRESS_STATUSES } from './domain/workflowContext';
-import { createOrderService, createStepEventV2, getAllOrdersService, getOrderPartsService, getOrderService } from './orders.service';
+import { createOrderService, createStepEventV2, getAllOrdersService, getOrderPartsService, getOrderService, getVisibleOrdersForRole } from './orders.service';
 import { getWorkflow as getWorkflowSequence, roleStatusMap } from './orders.workflow';
 import { getRoleSteps } from './workflow/access/role.access';
 import { getLatestExecution } from './workflow/queries/execution.queries';
@@ -123,110 +123,8 @@ export const resumeStepV2 = async (req: Request, res: Response) => {
   return res.json(result);
 };
 
-
-
-export const getVisibleOrdersV2 = async (req: Request, res: Response) => {
-  const role = req.user.role as employee_role;
-  const access = roleStatusMap[role];
-
-  if (!access) {
-    return res.json([]);
-  }
-
-  const orders = await prisma.order.findMany({
-    include: {
-      order_parts: true
-    }
-  });
-
-  const result = await Promise.all(
-    orders.map(async (order) => {
-      const wf = getWorkflowMap(order.product_type);
-
-      if (!wf) return null;
-
-      const state = await getOrderState(order, wf);
-
-      if (access.type === 'ALL') {
-        return {
-          ...order,
-          state
-        };
-      }
-
-      const allowedSteps = getRoleSteps(role, wf);
-
-      for (const step of allowedSteps) {
-        const scope = getScope(step);
-
-        if (scope === 'per_part') {
-          for (const part of order.order_parts) {
-            const latestExecution = await getLatestExecution({
-              orderId: order.id,
-              step,
-              orderPartId: part.id
-            });
-
-            if (latestExecution && IN_PROGRESS_STATUSES.includes(latestExecution.status as any)) {
-              return {
-                ...order,
-                state
-              };
-            }
-
-            const canStart = await canStartStepForPart({
-              order,
-              wf,
-              step,
-              orderPartId: part.id
-            });
-
-            if (canStart) {
-              return {
-                ...order,
-                state
-              };
-            }
-          }
-
-          continue;
-        }
-
-        const latestExecution = await getLatestExecution({
-          orderId: order.id,
-          step
-        });
-
-        if (latestExecution && IN_PROGRESS_STATUSES.includes(latestExecution.status as any)) {
-          return {
-            ...order,
-            state
-          };
-        }
-
-        const canStart = await canStartStepForPart({
-          order,
-          wf,
-          step
-        });
-
-        if (canStart) {
-          return {
-            ...order,
-            state
-          };
-        }
-      }
-
-      return null;
-    })
-  );
-
-  return res.json(result.filter(Boolean));
-};
-
-
 export const getOrderPartsV2 = async (req: Request, res: Response) => {
+
   const role = req.user.role as employee_role;
   const orderNumber = Number(req.params.orderNumber);
 
@@ -317,4 +215,17 @@ export const getOrderParts = async (req: Request, res: Response) => {
   const parts = await getOrderPartsService(orderNumber);
   console.log(parts)
   return res.json({ parts: parts });
+};
+
+export const getVisibleOrders = async (req: Request, res: Response) => {
+    const role = req.user.role as employee_role;
+    const access = roleStatusMap[role];
+
+    if (!access) {
+      return res.json([]);
+    }
+
+    const visibleOrders = await getVisibleOrdersForRole(role, access);
+
+    return res.json(visibleOrders);
 };

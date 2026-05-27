@@ -3,93 +3,11 @@ import { HttpError } from "../../../../utils/errors";
 import { READY_STATUSES } from "../../domain/workflowContext";
 import { isStepStartedOrDone, findCurrentExecution, hasStartedOrFinishedExecution } from "../queries/execution.queries";
 import { OrderStatus, WorkflowMap, OrderStatusV2, WorkflowStep } from "../../../../types/orderStatus";
-import prisma from "../../../../lib/prisma";
 import { getScope, getStepDependencies } from "../../domain/workflowContext";
 import { employee_role } from "@prisma/client";
 import { assertRoleCanAccessStep } from "../../domain/roleGuard";
 import { getOrderParts } from "../queries/orderParts.queries";
 import { stepScope } from "../../orders.workflow";
-
-
-export const canStartStepForPart = async (ctx: {
-  order: any;
-  wf: WorkflowMap;
-  step: step_name;
-  orderPartId?: string | null;
-}) => {
-  const { order, wf, step, orderPartId } = ctx;
-  const scope = getScope(step);
-
-  const alreadyStartedOrDone = await hasStartedOrFinishedExecution({
-    orderId: order.id,
-    step,
-    orderPartId
-  });
-
-  if (alreadyStartedOrDone) return false;
-
-  const dependencies = wf[step as OrderStatus] ?? [];
-
-  for (const dependencyStep of dependencies) {
-    if (scope === 'per_part') {
-      const dependencyReady = await isStepStartedOrDone({
-        orderId: order.id,
-        step: dependencyStep,
-        orderPartId
-      });
-
-      if (!dependencyReady) return false;
-
-      continue;
-    }
-
-    const dependencyReady = await allPartsReadyInDependency({
-      order,
-      dependencyStep
-    });
-
-    if (!dependencyReady) return false;
-  }
-
-  return true;
-};
-
-export const allPartsReadyInDependency = async (ctx: { order: any; dependencyStep: step_name; }) => {
-  const { order, dependencyStep } = ctx;
-  const dependencyScope = getScope(dependencyStep);
-  const partIds = order.order_parts.map((part: any) => part.id);
-
-  if (dependencyScope !== 'per_part') {
-    return isStepStartedOrDone({
-      orderId: order.id,
-      step: dependencyStep
-    });
-  }
-
-  if (partIds.length === 0) return false;
-
-  const readyExecutions = await prisma.step_execution.findMany({
-    where: {
-      order_id: order.id,
-      step_type: dependencyStep as step_name,
-      order_part_id: {
-        in: partIds
-      },
-      status: {
-        in: [...READY_STATUSES]
-      }
-    },
-    select: {
-      order_part_id: true
-    }
-  });
-
-  const readyPartIds = new Set(
-    readyExecutions.map((execution) => execution.order_part_id)
-  );
-
-  return partIds.every((partId: string) => readyPartIds.has(partId));
-};
 
 export const validateStepCanStart = async (ctx: {
   tx: any;
@@ -251,4 +169,76 @@ export const validateStepCanStart = async (ctx: {
       }
     }
   }
+};
+
+
+export const allPartsReadyInDependency = async (
+  ctx: { order: any; dependencyStep: step_name; },
+  executionsForOrder?: any[]
+) => {
+  const { order, dependencyStep } = ctx;
+  const dependencyScope = getScope(dependencyStep);
+  const partIds = order.order_parts.map((part: any) => part.id);
+
+  if (dependencyScope !== 'per_part') {
+    return isStepStartedOrDone({
+      orderId: order.id,
+      step: dependencyStep
+    }, executionsForOrder);
+  }
+
+  if (partIds.length === 0) return false;
+
+  const results = await Promise.all(
+    partIds.map((partId: string) => 
+      isStepStartedOrDone({
+        orderId: order.id,
+        step: dependencyStep,
+        orderPartId: partId
+      }, executionsForOrder)
+    )
+  );
+
+  return results.every(Boolean);
+};
+
+export const canStartStepForPart = async (
+  ctx: { order: any; wf: WorkflowMap; step: step_name; orderPartId?: string | null; },
+  executionsForOrder?: any[]
+) => {
+  const { order, wf, step, orderPartId } = ctx;
+  const scope = getScope(step);
+
+  const alreadyStartedOrDone = await hasStartedOrFinishedExecution({
+    orderId: order.id,
+    step,
+    orderPartId
+  }, executionsForOrder);
+
+  if (alreadyStartedOrDone) return false;
+
+  const dependencies = wf[step as OrderStatus] ?? [];
+
+  for (const dependencyStep of dependencies) {
+    if (scope === 'per_part') {
+      const dependencyReady = await isStepStartedOrDone({
+        orderId: order.id,
+        step: dependencyStep,
+        orderPartId
+      }, executionsForOrder);
+
+      if (!dependencyReady) return false;
+
+      continue;
+    }
+
+    const dependencyReady = await allPartsReadyInDependency({
+      order,
+      dependencyStep
+    }, executionsForOrder);
+
+    if (!dependencyReady) return false;
+  }
+
+  return true;
 };

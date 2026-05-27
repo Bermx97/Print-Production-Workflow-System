@@ -679,7 +679,6 @@ function renderState(state, workflow, stats = {}, parts = []) {
     if (stats[step]) {
       const stepVariants = stats[step];
       
-      // Sortowanie od największej do najmniejszej składki
       const sortedEntries = Object.entries(stepVariants).sort((a, b) => {
         if (a[0].toUpperCase() === "UNKNOWN") return 1;
         if (b[0].toUpperCase() === "UNKNOWN") return -1;

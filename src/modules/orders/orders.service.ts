@@ -2,7 +2,7 @@ import { employee_role, Prisma } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { EventType, OrderStatusV2 } from "../../types/orderStatus";
 import { HttpError } from '../../utils/errors';
-import { getStepFromRole, getWorkflow } from './domain/workflowContext';
+import { getStepFromRole, getWorkflow, getWorkflowMap, } from './domain/workflowContext';
 import { handleEnd } from './handlers/handleEnd';
 import { handlePause } from './handlers/handlePause';
 import { handleResume } from './handlers/handleResume';
@@ -10,6 +10,11 @@ import { handleStart } from './handlers/handleStart';
 import { roleStatusMap, workflow } from './orders.workflow';
 import { findCurrentExecution } from './workflow/queries/execution.queries';
 import { validateStepCanStart } from './workflow/rules/dependency.rules';
+import { getRoleSteps } from './workflow/access/role.access';
+import { getOrderState } from './workflow/state/orderState.service';
+import { getScope } from './domain/workflowContext';
+import { canStartStepForPart } from './workflow/rules/dependency.rules';
+import { IN_PROGRESS_STATUSES } from './domain/workflowContext';
 
 type CreateOrderData = Prisma.orderCreateInput;
 
@@ -71,7 +76,7 @@ export const getOrderWithRelations = async (orderNumber: number) => {
   
   return order;
 };
-
+/*
 export const getMyOrdersService = async (userRole: employee_role) => {
   const access = roleStatusMap[userRole];
 
@@ -117,11 +122,11 @@ export const getMyOrdersService = async (userRole: employee_role) => {
       return !hasEnd;
     });
   });
-};
+};*/
 
 export const createOrderService = async (data: CreateOrderData, partsData: Omit<Prisma.order_partsCreateManyInput, 'order_id'>[]) => {
-
   const order = await prisma.order.create({ data });
+
   await prisma.order_parts.createMany({
     data: partsData.map(part => ({
       ...part,
@@ -184,3 +189,81 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
   });
 };
 
+export const getVisibleOrdersForRole = async (role: employee_role, access: any) => {
+    const orders = await prisma.order.findMany({ 
+      include: { order_parts: true },
+      orderBy: { order_number: 'asc' }
+    });
+
+    const orderIds = orders.map(o => o.id);
+    const allExecutions = await prisma.step_execution.findMany({
+      where: { order_id: { in: orderIds } },
+      orderBy: { started_at: 'desc' }
+    });
+
+    const executionsByOrder = new Map<string, any[]>();
+    for (const ex of allExecutions) {
+      if (!executionsByOrder.has(ex.order_id)) {
+        executionsByOrder.set(ex.order_id, []);
+      }
+      executionsByOrder.get(ex.order_id)!.push(ex);
+    }
+
+    if (access.type === 'ALL') {
+      return Promise.all(
+        orders.map(async (o) => ({
+          ...o,
+          state: await getOrderState(o, getWorkflowMap(o.product_type)!, executionsByOrder.get(o.id) || [])
+        }))
+      );
+    }
+
+    const genericExecutions = new Set<string>();
+    const partExecutions = new Set<string>();
+
+    for (const ex of allExecutions) {
+      if (IN_PROGRESS_STATUSES.includes(ex.status as any)) {
+        genericExecutions.add(`${ex.order_id}_${ex.step_type}`);
+        if (ex.order_part_id) {
+          partExecutions.add(`${ex.order_id}_${ex.step_type}_${ex.order_part_id}`);
+        }
+      }
+    }
+
+    const visibleOrders = [];
+
+    for (const order of orders) {
+      const wf = getWorkflowMap(order.product_type);
+      if (!wf) continue;
+
+      const allowedSteps = getRoleSteps(role, wf);
+      let isVisible = false;
+      const orderExecutions = executionsByOrder.get(order.id) || [];
+
+      for (const step of allowedSteps) {
+        const scope = getScope(step);
+        const partsToCheck = scope === 'per_part' ? order.order_parts : [undefined];
+
+        for (const part of partsToCheck) {
+          const inProgress = part === undefined
+            ? genericExecutions.has(`${order.id}_${step}`)
+            : partExecutions.has(`${order.id}_${step}_${part.id}`);
+
+          if (inProgress || await canStartStepForPart({ order, wf, step, orderPartId: part?.id }, orderExecutions)) {
+            isVisible = true; 
+            break;
+          }
+        }
+        if (isVisible) break;
+      }
+
+      if (isVisible) {
+        visibleOrders.push({ 
+          ...order, 
+          state: await getOrderState(order, wf, orderExecutions) 
+        });
+      }
+    }
+
+    return visibleOrders;
+};

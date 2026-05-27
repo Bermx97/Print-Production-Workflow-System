@@ -1,11 +1,15 @@
 import { WorkflowMap, OrderStatus } from "../../../../types/orderStatus";
 import prisma from "../../../../lib/prisma";
-import { step_name } from "@prisma/client";
 import { BLOCK_START_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
 
-export const getOrderState = async (order: any, wf: WorkflowMap) => {
+export const getOrderState = async (order: any, wf: WorkflowMap, executionsForOrder?: any[]) => {
   const state: Record<string, string> = {};
+
+  const executions = executionsForOrder || await prisma.step_execution.findMany({
+    where: { order_id: order.id },
+    orderBy: { started_at: 'desc' }
+  });
 
   for (const step of Object.keys(wf) as OrderStatus[]) {
     const scope = getScope(step);
@@ -13,32 +17,22 @@ export const getOrderState = async (order: any, wf: WorkflowMap) => {
     if (scope === 'per_part') {
       const partIds = order.order_parts.map((part: any) => part.id);
 
-      const executions = await prisma.step_execution.findMany({
-        where: {
-          order_id: order.id,
-          step_type: step as step_name,
-          order_part_id: {
-            in: partIds
-          },
-          status: {
-            in: [...BLOCK_START_STATUSES]
-          }
-        },
-        select: {
-          status: true,
-          order_part_id: true
-        }
-      });
+      const stepExecutions = executions.filter((ex: any) => 
+        ex.step_type === step &&
+        ex.order_part_id && 
+        partIds.includes(ex.order_part_id) &&
+        BLOCK_START_STATUSES.includes(ex.status as any)
+      );
 
-      if (executions.some((execution) => execution.status === 'active')) {
+      if (stepExecutions.some((execution: any) => execution.status === 'active')) {
         state[step] = 'ACTIVE';
-      } else if (executions.some((execution) => execution.status === 'paused')) {
+      } else if (stepExecutions.some((execution: any) => execution.status === 'paused')) {
         state[step] = 'PAUSED';
       } else if (
         partIds.length > 0 &&
         partIds.every((partId: string) =>
-          executions.some(
-            (execution) =>
+          stepExecutions.some(
+            (execution: any) =>
               execution.order_part_id === partId &&
               execution.status === 'done'
           )
@@ -52,18 +46,10 @@ export const getOrderState = async (order: any, wf: WorkflowMap) => {
       continue;
     }
 
-    const execution = await prisma.step_execution.findFirst({
-      where: {
-        order_id: order.id,
-        step_type: step as step_name,
-        status: {
-          in: [...BLOCK_START_STATUSES]
-        }
-      },
-      orderBy: {
-        started_at: 'desc'
-      }
-    });
+    const execution = executions.find((ex: any) => 
+      ex.step_type === step &&
+      BLOCK_START_STATUSES.includes(ex.status as any)
+    );
 
     if (execution?.status === 'active') {
       state[step] = 'ACTIVE';
