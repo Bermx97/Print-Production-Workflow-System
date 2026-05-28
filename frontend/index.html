@@ -54,6 +54,11 @@
       background: #c90000;
     }
 
+    button:disabled, input:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
     .secondary {
       background: #1f1f1f;
       border: 1px solid #333;
@@ -178,6 +183,26 @@
     window.location.href = "/login.html";
   }
 
+  decodeTokenPayload();
+
+  function decodeTokenPayload() {
+    try {
+      const payload = token.split(".")[1];
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+      const decoded = JSON.parse(atob(padded));
+
+      if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+        logout();
+        return {};
+      }
+      return decoded;
+    } catch {
+      logout();
+      return {};
+    }
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -198,18 +223,23 @@
     }, 4000);
   }
 
+  function setSubmitting(isLoading) {
+    document.querySelectorAll(".top-bar button, .top-bar input").forEach(el => {
+      el.disabled = isLoading;
+    });
+  }
+
   function renderOrders(orders) {
     const container = document.getElementById("orders");
     container.innerHTML = "";
 
-    if (!orders.length) {
+    if (!orders || !orders.length) {
       container.innerHTML = "<p>No orders found</p>";
       return;
     }
 
     orders.forEach(order => {
       const div = document.createElement("div");
-
       div.className = "order-card";
 
       div.onclick = () => {
@@ -250,14 +280,14 @@
   }
 
   async function searchOrder() {
-    const orderNumber =
-      document.getElementById("searchOrderInput").value;
+    const orderNumber = document.getElementById("searchOrderInput").value;
 
     if (!orderNumber) {
-      loadOrders();
+      await loadOrders();
       return;
     }
 
+    setSubmitting(true);
     try {
       const res = await fetch(`${API}/${orderNumber}`, {
         headers: {
@@ -265,10 +295,10 @@
         }
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        showError(data.message || "Order not found");
+        showError(data?.message || "Order not found");
         return;
       }
 
@@ -276,10 +306,13 @@
 
     } catch {
       showError("Search error");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   async function loadOrders() {
+    setSubmitting(true);
     try {
       const res = await fetch(`${API}/my`, {
         headers: {
@@ -287,10 +320,10 @@
         }
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        showError(data.message || "Error loading orders");
+        showError(data?.message || "Error loading orders");
         return;
       }
 
@@ -298,15 +331,31 @@
 
     } catch {
       showError("Load error");
+    } finally {
+      setSubmitting(false);
     }
   }
 
   function logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("login");
     window.location.href = "/login.html";
   }
 
+  document.getElementById("searchOrderInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      searchOrder();
+    }
+  });
+
   loadOrders();
+
+  setInterval(() => {
+    const searchInputValue = document.getElementById("searchOrderInput").value;
+    if (!searchInputValue) {
+      loadOrders();
+    }
+  }, 10000);
 </script>
 
 </body>

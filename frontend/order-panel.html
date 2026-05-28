@@ -398,8 +398,15 @@
         const payload = token.split(".")[1];
         const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
         const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
-        return JSON.parse(atob(padded));
+        const decoded = JSON.parse(atob(padded));
+
+        if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+          logout();
+          return {};
+        }
+        return decoded;
       } catch {
+        logout();
         return {};
       }
     }
@@ -516,6 +523,12 @@
       }, 4000);
     }
 
+    function setSubmitting(isLoading) {
+      document.querySelectorAll(".actions button, .top-bar button, .modal-actions button").forEach(btn => {
+        btn.disabled = isLoading;
+      });
+    }
+
     function selectPart(orderNumber, partId, button) {
       selectedParts[orderNumber] = partId;
 
@@ -544,6 +557,7 @@
     }
 
     async function sendStepAction(orderNumber, action, body, errorLabel) {
+      setSubmitting(true);
       try {
         const res = await fetch(`${API}/${orderNumber}/${action}`, {
           method: "POST",
@@ -558,11 +572,13 @@
           return false;
         }
 
-        loadOrder();
+        await loadOrder();
         return true;
       } catch {
         showError(`Network error on ${errorLabel}`);
         return false;
+      } finally {
+        setSubmitting(false);
       }
     }
 
@@ -621,6 +637,7 @@
         return;
       }
 
+      setSubmitting(true);
       try {
         const res = await fetch(`${API}/${currentOrderNumber}/end`, {
           method: "POST",
@@ -639,76 +656,78 @@
         }
 
         closeModal();
-        loadOrder();
+        await loadOrder();
       } catch {
         showError("Network error on END");
+      } finally {
+        setSubmitting(false);
       }
     }
 
-function renderState(state, workflow, stats = {}, parts = []) {
-  if (!state || typeof state !== "object") {
-    state = {};
-  }
+    function renderState(state, workflow, stats = {}, parts = []) {
+      if (!state || typeof state !== "object") {
+        state = {};
+      }
 
-  if (!Array.isArray(workflow)) {
-    workflow = [];
-  }
+      if (!Array.isArray(workflow)) {
+        workflow = [];
+      }
 
-  return workflow.map(step => {
-    const normalized = normalizeStatus(state[step] || "WAITING");
+      return workflow.map(step => {
+        const normalized = normalizeStatus(state[step] || "WAITING");
 
-    let icon = "&#9898;";
-    let color = "#94a3b8";
+        let icon = "&#9898;";
+        let color = "#94a3b8";
 
-    if (normalized === "ACTIVE") {
-      icon = "&#128993;";
-      color = "#ffcc00";
+        if (normalized === "ACTIVE") {
+          icon = "&#128993;";
+          color = "#ffcc00";
+        }
+
+        if (normalized === "PAUSED") {
+          icon = "&#9208;";
+          color = "#38bdf8";
+        }
+
+        if (normalized === "DONE") {
+          icon = "&#10004;";
+          color = "#4caf50";
+        }
+
+        let statsText = "";
+        if (stats[step]) {
+          const stepVariants = stats[step];
+
+          const sortedEntries = Object.entries(stepVariants).sort((a, b) => {
+            if (a[0].toUpperCase() === "UNKNOWN") return 1;
+            if (b[0].toUpperCase() === "UNKNOWN") return -1;
+            return b[0].localeCompare(a[0], undefined, { numeric: true, sensitivity: 'base' });
+          });
+
+          statsText = sortedEntries
+            .map(([variant, qty]) => {
+              if (!variant || variant.toUpperCase() === "UNKNOWN") {
+                return `<span style="margin-left: 15px; color: #fff; font-weight: bold; font-size: 18px; background: #111; padding: 5px 12px; border-radius: 4px; border-left: 4px solid #ff2a2a; white-space: nowrap;">(${qty}) pcs</span>`;
+              }
+
+              const variantName = formatVariant(variant);
+              const matchingPart = parts.find(p => String(p.variant) === String(variant));
+              const runs = matchingPart ? (matchingPart.runs ?? "?") : "?";
+              return `<span style="margin-left: 15px; color: #fff; font-weight: bold; font-size: 18px; background: #111; padding: 5px 12px; border-radius: 4px; border-left: 4px solid #ff2a2a; white-space: nowrap;">${escapeHtml(runs)}  X  ${escapeHtml(variantName)}:  (${qty}) pcs</span>`;
+            })
+            .join("");
+        }
+
+        return `
+        <div class="state-row" style="display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 10px; gap: 5px 0;">
+          <span class="state-label" style="color:${color};">
+            ${icon} ${escapeHtml(step)}
+          </span>
+          ${statsText}
+        </div>
+      `;
+      }).join("");
     }
-
-    if (normalized === "PAUSED") {
-      icon = "&#9208;";
-      color = "#38bdf8";
-    }
-
-    if (normalized === "DONE") {
-      icon = "&#10004;";
-      color = "#4caf50";
-    }
-
-    let statsText = "";
-    if (stats[step]) {
-      const stepVariants = stats[step];
-      
-      const sortedEntries = Object.entries(stepVariants).sort((a, b) => {
-        if (a[0].toUpperCase() === "UNKNOWN") return 1;
-        if (b[0].toUpperCase() === "UNKNOWN") return -1;
-        return b[0].localeCompare(a[0], undefined, { numeric: true, sensitivity: 'base' });
-      });
-
-      statsText = sortedEntries
-        .map(([variant, qty]) => {
-          if (!variant || variant.toUpperCase() === "UNKNOWN") {
-            return `<span style="margin-left: 15px; color: #fff; font-weight: bold; font-size: 18px; background: #111; padding: 5px 12px; border-radius: 4px; border-left: 4px solid #ff2a2a; white-space: nowrap;">(${qty}) pcs</span>`;
-          }
-          
-          const variantName = formatVariant(variant);
-          const matchingPart = parts.find(p => String(p.variant) === String(variant));
-          const runs = matchingPart ? (matchingPart.runs ?? "?") : "?";
-          return `<span style="margin-left: 15px; color: #fff; font-weight: bold; font-size: 18px; background: #111; padding: 5px 12px; border-radius: 4px; border-left: 4px solid #ff2a2a; white-space: nowrap;">${escapeHtml(runs)}  X  ${escapeHtml(variantName)}:  (${qty}) pcs</span>`;
-        })
-        .join("");
-    }
-
-    return `
-    <div class="state-row" style="display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 10px; gap: 5px 0;">
-      <span class="state-label" style="color:${color};">
-        ${icon} ${escapeHtml(step)}
-      </span>
-      ${statsText}
-    </div>
-  `;
-  }).join("");
-}
 
     function renderOrders(orders, stats = {}, parts = []) {
       const container = document.getElementById("orders");
@@ -719,7 +738,35 @@ function renderState(state, workflow, stats = {}, parts = []) {
         div.className = "order-card";
 
         const partsId = `parts-${order.order_number}`;
-        const showParts = currentStepNeedsPart();
+        
+        const allStepsDone = Array.isArray(order.workflow) && 
+          order.workflow.length > 0 && 
+          order.workflow.every(step => normalizeStatus(order.state?.[step]) === "DONE");
+
+        const allPartsDone = Array.isArray(parts) &&
+          parts.length > 0 &&
+          parts.every(part => getPartStatus(part) === "DONE");
+
+        let currentOperatorDone = false;
+        if (currentRole && order.state) {
+          const roleToStepMap = {
+            printer_operator: ["printing"],
+            folding_operator: ["folding", "folding_with_milling"],
+            sewing_operator: ["sewing"],
+            case_maker: ["case_making"],
+            hardcover_binder_operator: ["hardcover_binding"],
+            perfect_bound_operator: ["binding"],
+            stitching_operator: ["stitching"]
+          };
+          const stepsToCheck = roleToStepMap[currentRole] || [];
+          const relevantSteps = stepsToCheck.filter(step => order.workflow?.includes(step));
+          if (relevantSteps.length > 0) {
+            currentOperatorDone = relevantSteps.every(step => normalizeStatus(order.state[step]) === "DONE");
+          }
+        }
+
+        const hideControls = allStepsDone || allPartsDone || currentOperatorDone;
+        const showParts = currentStepNeedsPart() && !hideControls;
 
         div.innerHTML = `
         <div class="order-title">
@@ -739,128 +786,108 @@ function renderState(state, workflow, stats = {}, parts = []) {
         ${showParts
             ? `
             <div class="parts-title">Parts</div>
-            <div class="parts" id="${partsId}">
-              <span class="muted">Loading parts...</span>
-            </div>
+            <div class="parts" id="${partsId}"></div>
           `
             : ""}
 
-        <div class="actions">
-          <button onclick="startStep(${order.order_number})">
-            START
-          </button>
+        ${!hideControls
+            ? `
+            <div class="actions">
+              <button onclick="startStep(${order.order_number})">
+                START
+              </button>
 
-          <button class="warning" onclick="pauseStep(${order.order_number})">
-            PAUSE
-          </button>
+              <button class="warning" onclick="pauseStep(${order.order_number})">
+                PAUSE
+              </button>
 
-          <button class="secondary" onclick="openModal(${order.order_number})">
-            END
-          </button>
-        </div>
+              <button class="secondary" onclick="openModal(${order.order_number})">
+                END
+              </button>
+            </div>
+          `
+            : ""}
       `;
 
         container.appendChild(div);
 
         if (showParts) {
-          loadParts(order.order_number, partsId);
+          renderPartsSync(order.order_number, partsId, parts);
         }
       });
     }
 
-    async function loadParts(orderNumber, containerId) {
-      try {
-        const res = await fetch(`${API}/${orderNumber}/parts`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+    function renderPartsSync(orderNumber, containerId, parts) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
 
-        const data = await res.json().catch(() => null);
+      container.innerHTML = "";
+      partLabels[orderNumber] = {};
 
-        if (!res.ok) {
-          showError(data?.message || "Error loading parts");
-          return;
-        }
+      if (!parts || parts.length === 0) {
+        container.innerHTML = `<span class="muted">No parts</span>`;
+        return;
+      }
 
-        const parts = data?.order_parts || data?.parts || [];
-        const container = document.getElementById(containerId);
+      const selectedStillExists = parts.some(part =>
+        String(part.id) === String(selectedParts[orderNumber])
+      );
 
-        container.innerHTML = "";
-        partLabels[orderNumber] = {};
-
-        if (parts.length === 0) {
-          container.innerHTML = `<span class="muted">No parts</span>`;
-          return;
-        }
-
-        const selectedStillExists = parts.some(part =>
-          String(part.id) === String(selectedParts[orderNumber])
-        );
-
-        if (!selectedStillExists && currentStepNeedsPart()) {
-          const firstOpenPart = parts.find(part => {
-            const status = getPartStatus(part);
-            return status !== "DONE" && status !== "BLOCKED";
-          });
-          selectedParts[orderNumber] = firstOpenPart?.id || null;
-        }
-
-        parts.forEach(part => {
+      if (!selectedStillExists && currentStepNeedsPart()) {
+        const firstOpenPart = parts.find(part => {
           const status = getPartStatus(part);
-          const label = `${formatVariant(part.variant)} (${part.part_quantity ?? "?"})`;
-          const runs = part.runs ?? "?";
+          return status !== "DONE" && status !== "BLOCKED";
+        });
+        selectedParts[orderNumber] = firstOpenPart?.id || null;
+      }
 
-          partLabels[orderNumber][part.id] = label;
+      parts.forEach(part => {
+        const status = getPartStatus(part);
+        const label = `${formatVariant(part.variant)} (${part.part_quantity ?? "?"})`;
+        const runs = part.runs ?? "?";
 
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "part-btn";
+        partLabels[orderNumber][part.id] = label;
 
-          if (String(selectedParts[orderNumber]) === String(part.id)) {
-            btn.classList.add("selected");
-          }
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "part-btn";
 
-          if (status === "ACTIVE") {
-            btn.classList.add("active");
-          }
+        if (String(selectedParts[orderNumber]) === String(part.id)) {
+          btn.classList.add("selected");
+        }
 
-          if (status === "PAUSED") {
-            btn.classList.add("paused");
-          }
+        if (status === "ACTIVE") btn.classList.add("active");
+        if (status === "PAUSED") btn.classList.add("paused");
 
-          if (status === "DONE") {
-            btn.classList.add("done");
-            btn.disabled = true;
-          }
+        if (status === "DONE") {
+          btn.classList.add("done");
+          btn.disabled = true;
+        }
 
-          if (status === "BLOCKED") {
-            btn.classList.add("blocked");
-            btn.disabled = true;
-          }
+        if (status === "BLOCKED") {
+          btn.classList.add("blocked");
+          btn.disabled = true;
+        }
 
-          btn.innerHTML = `
+        btn.innerHTML = `
           <span>${escapeHtml(runs)} X ${escapeHtml(label)}pcs</span>
           <span class="part-status">
             ${status === "DONE" ? "&#10003; done" : escapeHtml(status.toLowerCase())}
           </span>
         `;
 
-          btn.onclick = event => {
-            event.stopPropagation();
+        btn.onclick = event => {
+          event.stopPropagation();
 
-            if (status === "DONE" || status === "BLOCKED") {
-              return;
-            }
+          if (status === "DONE" || status === "BLOCKED") {
+            return;
+          }
 
-            selectPart(orderNumber, part.id, btn);
-          };
+          selectPart(orderNumber, part.id, btn);
+        };
 
-          container.appendChild(btn);
-        });
-      } catch {
-        showError("Network error on PARTS");
-      }
+        container.appendChild(btn);
+      });
     }
 
     async function loadOrder() {
@@ -909,6 +936,12 @@ function renderState(state, workflow, stats = {}, parts = []) {
     }
 
     loadOrder();
+
+    setInterval(() => {
+      if (!currentOrderNumber) {
+        loadOrder();
+      }
+    }, 10000);
   </script>
 
 </body>
