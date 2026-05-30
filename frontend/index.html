@@ -429,22 +429,30 @@
       });
 
     Object.values(grouped).forEach(group => {
-      const partsStr = group.parts.length > 0 ? ` —   part: ${group.parts.join(", ")}` : "";
+          
+            group.parts.sort((a, b) => {
+              if (a === "Cover") return -1;
+              if (b === "Cover") return 1;
+              
+              return parseInt(b) - parseInt(a);
+            });
 
-      htmlContent += `
-        <li onclick="window.location.href='/order-panel.html?orderNumber=${group.orderNum}'" style="cursor: pointer;">
-          <strong>Order #${escapeHtml(group.orderNum)}</strong>${escapeHtml(partsStr)}
-        </li>
-      `;
-    });
+            const partsStr = group.parts.length > 0 ? ` — part: ${group.parts.join(", ")}` : "";
 
-      htmlContent += '</ul>';
-      banner.innerHTML = htmlContent;
+            htmlContent += `
+                <li onclick="window.location.href='/order-panel.html?orderNumber=${group.orderNum}'" style="cursor: pointer;">
+                    <strong>Order #${escapeHtml(group.orderNum)}</strong>${escapeHtml(partsStr)}
+                </li>
+            `;
+        });
+
+        htmlContent += '</ul>';
+        banner.innerHTML = htmlContent;
 
     } catch (err) {
-      console.error("Error checking active tasks:", err);
+        console.error("Error checking active tasks:", err);
     }
-  }
+}
 
   function logout() {
     localStorage.removeItem("token");
