@@ -63,8 +63,8 @@ export const workflow: Record<ProductType, Partial<Record<OrderStatus, OrderStat
     printing: [],
     folding: ['printing'],
     sewing: ['folding'],
-    case_making: ['folding'],
-    hardcover_binding: ['sewing', 'case_making']
+    case_making: ['folding', 'printing'],
+    hardcover_binding: ['sewing', 'case_making', 'printing']
   },
   // ... other product types
 };
