@@ -211,7 +211,7 @@ async function getNextOrderNumberStart() {
 }
 
 function buildOrderParts(orderId: string, orderQuantity: number) {
-  const partCount = randInt(1, 6);
+  const partCount = randInt(1, 4);
   const variants = shuffle(VARIANTS).slice(0, partCount);
   const basePartQuantity = clamp(
     roundTo50(orderQuantity + randInt(0, Math.max(50, Math.round(orderQuantity * 0.05)))),

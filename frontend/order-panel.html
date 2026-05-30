@@ -718,11 +718,19 @@
         if (stats[step]) {
           const stepVariants = stats[step];
 
-          const sortedEntries = Object.entries(stepVariants).sort((a, b) => {
-            if (a[0].toUpperCase() === "UNKNOWN") return 1;
-            if (b[0].toUpperCase() === "UNKNOWN") return -1;
-            return b[0].localeCompare(a[0], undefined, { numeric: true, sensitivity: 'base' });
-          });
+        const sortedEntries = Object.entries(stepVariants).sort((a, b) => {
+          const vA = a[0].toUpperCase();
+          const vB = b[0].toUpperCase();
+
+          if (vA === "UNKNOWN") return 1;
+          if (vB === "UNKNOWN") return -1;
+
+          if (vA === "COVER") return -1;
+          if (vB === "COVER") return 1;
+
+          // 3. Reszta: sortowanie numeryczne malejące (b - a)
+          return b[0].localeCompare(a[0], undefined, { numeric: true, sensitivity: 'base' });
+        });
 
           statsText = sortedEntries
             .map(([variant, qty]) => {
