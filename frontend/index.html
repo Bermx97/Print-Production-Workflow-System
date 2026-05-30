@@ -130,6 +130,34 @@
       z-index: 9999;
       max-width: 320px;
     }
+
+    .active-banner {
+      background: #1c150c;
+      border-left: 4px solid #ff9f00;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 25px;
+      box-shadow: 0 0 15px rgba(255, 159, 0, 0.1);
+    }
+    .active-banner h4 {
+      margin: 0 0 6px 0;
+      color: #ff9f00;
+      font-size: 20px;
+    }
+    .active-banner p {
+      margin: 0 0 10px 0;
+      color: #ccc;
+      font-size: 15px;
+    }
+    .active-banner ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #fff;
+      font-size: 15px;
+    }
+    .active-banner li {
+      margin-bottom: 4px;
+    }
   </style>
 </head>
 
@@ -137,6 +165,8 @@
 
 <div class="container">
   <h1>MY ORDERS</h1>
+
+  <div id="activeTasksBanner" class="active-banner" style="display: none;"></div>
 
   <div class="top-bar">
     <button onclick="window.location.href='/create-order.html'">
@@ -311,8 +341,10 @@
     }
   }
 
-  async function loadOrders() {
-    setSubmitting(true);
+  async function loadOrders(isBackground = false) {
+    if (!isBackground) {
+      setSubmitting(true);
+    }
     try {
       const res = await fetch(`${API}/my`, {
         headers: {
@@ -323,16 +355,92 @@
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        showError(data?.message || "Error loading orders");
+        if (!isBackground) {
+          showError(data?.message || "Error loading orders");
+        }
         return;
       }
 
       renderOrders(data);
 
     } catch {
-      showError("Load error");
+      if (!isBackground) {
+        showError("Load error");
+      }
     } finally {
-      setSubmitting(false);
+      if (!isBackground) {
+        setSubmitting(false);
+      }
+    }
+  }
+
+  async function checkActiveOperatorSteps() {
+    if (!token) return;
+    const banner = document.getElementById("activeTasksBanner");
+
+    try {
+      const res = await fetch(`${API}/my/active`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) return;
+
+      const activeSteps = await res.json().catch(() => []);
+
+      if (!activeSteps || activeSteps.length === 0) {
+        banner.style.display = "none";
+        return;
+      }
+
+      banner.style.display = "block";
+      
+      let htmlContent = `
+        <h4>⚠️ You have active processes in the background!</h4>
+        <p>Remember to stop or pause your work before breaks or leaving for the day:</p>
+        <ul>
+      `;
+
+      const grouped = {};
+
+      activeSteps.forEach(step => {
+        const orderNum = step.order ? step.order.order_number : step.order_id;
+        const stepType = step.step_type;
+        const key = `${orderNum}_${stepType}`;
+
+        let partName = "";
+        if (step.order_part && step.order_part.variant) {
+          partName = String(step.order_part.variant).replace(/^V/i, "");
+        }
+
+        if (!grouped[key]) {
+          grouped[key] = {
+            orderNum: orderNum,
+            parts: []
+          };
+        }
+
+        if (partName) {
+          grouped[key].parts.push(partName);
+        }
+      });
+
+      Object.values(grouped).forEach(group => {
+        const partsStr = group.parts.length > 0 ? ` —   part: ${group.parts.join(", ")}` : "";
+        
+        htmlContent += `
+          <li>
+            <strong>Order #${escapeHtml(group.orderNum)}</strong>${escapeHtml(partsStr)}
+          </li>
+        `;
+      });
+
+      htmlContent += '</ul>';
+      banner.innerHTML = htmlContent;
+
+    } catch (err) {
+      console.error("Error checking active tasks:", err);
     }
   }
 
@@ -349,13 +457,15 @@
   });
 
   loadOrders();
+  checkActiveOperatorSteps();
 
   setInterval(() => {
     const searchInputValue = document.getElementById("searchOrderInput").value;
     if (!searchInputValue) {
-      loadOrders();
+      loadOrders(true);
     }
-  }, 10000);
+    checkActiveOperatorSteps(); 
+  }, 15000);
 </script>
 
 </body>

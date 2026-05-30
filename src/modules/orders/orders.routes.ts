@@ -5,7 +5,7 @@ import { isAuthenticated } from '../../middlewares/isAuthenticated';
 import validateRequest from '../../middlewares/validateRequest';
 import { getOrderStatsController } from './analytics.controller';
 import { createOrderValidation } from './order.validation';
-import { createOrder, endStepV2, getOrderByNumber, getOrderPartsV2, getOrders, getVisibleOrders, pauseStepV2, resumeStepV2, startStepV2 } from './orders.controller';
+import { createOrder, endStepV2, getOrderByNumber, getOrderPartsV2, getOrders, getVisibleOrders, pauseStepV2, resumeStepV2, startStepV2, getMyActiveSteps } from './orders.controller';
 
 
 
@@ -15,6 +15,7 @@ const router = express.Router();
 
 router.get('/', isAuthenticated, getOrders);
 router.get('/my', isAuthenticated, getVisibleOrders);
+router.get('/my/active', isAuthenticated, getMyActiveSteps)
 //router.get('/:orderNumber/analytics',/* isAuthenticated,*/ doneByStepAndVariant)
 router.get('/:orderNumber/parts', isAuthenticated, getOrderPartsV2)
 router.get('/:orderNumber', isAuthenticated, getOrderByNumber);

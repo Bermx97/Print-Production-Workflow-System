@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import prisma from '../../lib/prisma';
 import { HttpError } from '../../utils/errors';
 import { BLOCK_START_STATUSES, getScope, getWorkflowMap, IN_PROGRESS_STATUSES } from './domain/workflowContext';
-import { createOrderService, createStepEventV2, getAllOrdersService, getOrderPartsService, getOrderService, getVisibleOrdersForRole } from './orders.service';
+import { createOrderService, createStepEventV2, getAllOrdersService, getOrderPartsService, getOrderService, getVisibleOrdersForRole, getMyActiveStepsService } from './orders.service';
 import { getWorkflow as getWorkflowSequence, roleStatusMap } from './orders.workflow';
 import { getRoleSteps } from './workflow/access/role.access';
 import { getLatestExecution } from './workflow/queries/execution.queries';
@@ -62,6 +62,11 @@ export const createOrder = async (req: Request, res: Response) => {
   const result = await createOrderService(data, parts);
   res.status(201).json({ message: `Order ${orderNumber} created`, order: result });
 };
+
+export const getMyActiveSteps = async (req: Request, res: Response) => {
+  const result = await getMyActiveStepsService(req.user.id);
+  return res.json(result);
+}
 
 export const startStepV2 = async (req: Request, res: Response) => {
   const { orderPartId } = req.body;

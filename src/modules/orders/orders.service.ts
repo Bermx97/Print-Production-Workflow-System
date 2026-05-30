@@ -18,6 +18,27 @@ import { IN_PROGRESS_STATUSES } from './domain/workflowContext';
 
 type CreateOrderData = Prisma.orderCreateInput;
 
+export const getMyActiveStepsService = async (userId: string) => {
+  const activeExecutions = await prisma.step_execution.findMany({
+    where: { status: 'active'},
+    include: { order_part: true, order: true }
+  });
+  const activeOrderIds = activeExecutions.map(c => c.order_id);
+  const employeeLogs = await prisma.step_logs.findMany({
+    where: {
+      employee: userId,
+      order_id: { in: activeOrderIds } 
+    }
+  });
+  const myActiveExecutions = activeExecutions.filter(execution => {
+    return employeeLogs.some(log => 
+      log.order_id === execution.order_id &&
+      log.step_name === execution.step_type &&
+      log.order_part_id === execution.order_part_id
+    );
+  });
+  return myActiveExecutions;
+}
 
 export const getAllOrdersService = async () => {
   return await prisma.order.findMany({
