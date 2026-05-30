@@ -2,7 +2,15 @@
 
 ## Demo & Live Access
 
-https://github.com/user-attachments/assets/447788ae-b8c0-4cfb-8464-60384f85ad4d
+<video src="https://github.com/user-attachments/assets/cf8a944f-d32c-46a6-89de-0d063b5dbc2d"
+  autoplay 
+  loop 
+  muted 
+  playsinline 
+  controls 
+  width="100%">
+</video>
+**Full-quality demo is available here:** https://www.youtube.com/watch?v=XBatprMwN1U
 
  **Live Link (Hosted on Render):** [https://print-production-workflow-system.onrender.com](https://print-production-workflow-system.onrender.com)
 
