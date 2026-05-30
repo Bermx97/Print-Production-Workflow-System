@@ -97,53 +97,6 @@ export const getOrderWithRelations = async (orderNumber: number) => {
   
   return order;
 };
-/*
-export const getMyOrdersService = async (userRole: employee_role) => {
-  const access = roleStatusMap[userRole];
-
-  if (!access) {
-    throw new HttpError('No access', 403);
-  }
-
-  const orders = await prisma.order.findMany({
-    include: {
-      step_logs: true,
-    },
-    orderBy: {
-      due_date: 'asc'
-    }
-  });
-
-  return orders.filter(order => {
-    const productWorkflow = workflow[order.product_type];
-
-    if (!productWorkflow) return false;
-
-    const logs = order.step_logs;
-
-    const allowedSteps =
-      access.type === 'ALL'
-        ? (Object.keys(productWorkflow) as OrderStatusV2[])
-        : (access.steps as OrderStatusV2[]).filter(step => productWorkflow[step]);
-
-    return allowedSteps.some((step) => {
-      const stepLogs = logs.filter(l => l.step_name === step);
-
-      const hasStart = stepLogs.some(l => l.event_type === 'START');
-      const hasEnd = stepLogs.some(l => l.event_type === 'END');
-
-      const deps = productWorkflow[step] ?? [];
-
-      const depsDone = deps.every(dep =>
-        logs.some(l => l.step_name === dep && l.event_type === 'END')
-      );
-
-      if (!depsDone) return false;
-
-      return !hasEnd;
-    });
-  });
-};*/
 
 export const createOrderService = async (data: CreateOrderData, partsData: Omit<Prisma.order_partsCreateManyInput, 'order_id'>[]) => {
   const order = await prisma.order.create({ data });

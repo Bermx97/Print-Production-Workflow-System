@@ -3,6 +3,26 @@ import { product_type, Variant } from '@prisma/client';
 
 const allowedVariants = Array.from(new Set([...Object.values(Variant), 'COVER']));
 
+function hasUniqueVariants(parts: Array<{ variant?: string }>) {
+    const variants = parts
+    .map((part) => part.variant)
+    .filter((variant): variant is string => typeof variant === 'string');
+
+    return new Set(variants).size === variants.length;
+}
+
+function partsHaveValidRuns(parts: Array<{ variant?: string; runs?: unknown }>) {
+    if (!Array.isArray(parts)) return true;
+
+    return parts.every((part) => {
+        if (!allowedVariants.includes(part.variant ?? '')) return true;
+        if (part.variant === 'COVER') return true;
+
+        const runs = Number(part.runs);
+        return Number.isInteger(runs) && runs >= 1 && runs <= 100;
+    });
+}
+
 export const createOrderValidation = [
     body('orderNumber')
     .isInt({ min: 1, max: 1000000 })
@@ -42,13 +62,21 @@ export const createOrderValidation = [
 
     body('parts').isArray({ min: 1 })
     .isArray({ min: 1, max: 7 })
-    .withMessage('You can add between 1 and 7 parts per order'),
+    .withMessage('You can add between 1 and 7 parts per order')
+    .bail()
+    .custom(hasUniqueVariants)
+    .withMessage('Order parts variants must be unique'),
 
     body('parts.*.variant')
     .isIn(allowedVariants)
     .withMessage('variant must be one of: V4, V8, V16, V24, V32, V64, COVER'),
 
+    body('parts')
+    .custom(partsHaveValidRuns)
+    .withMessage('Signatures must be between 1 and 100'),
+
     body('parts.*.runs')
+    .optional({ values: 'null' })
     .isInt({ min: 1, max: 100 })
     .withMessage('Signatures must be between 1 and 100')
     .toInt(),

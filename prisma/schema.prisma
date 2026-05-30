@@ -58,7 +58,7 @@ model order_parts {
   order     order @relation(fields: [order_id], references: [id])
 
   variant   Variant
-  runs      Int
+  runs      Int?
   part_quantity  Int
   step_execution step_execution[]
   step_logs     step_logs[]

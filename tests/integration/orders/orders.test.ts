@@ -3,7 +3,7 @@ import request from 'supertest';
 import app from '../../../src/app';
 import prisma from '../../../src/lib/prisma';
 import { getAuthToken } from '../../utils/auth';
-import { createOrder, getRandomQuantity, getRandomClient, getRandomEvenPages, getRandomVariant, getRandomRun, getRandomParts } from "../../utils/order";
+import { createOrder, getRandomQuantity, getRandomClient, getRandomEvenPages, getRandomVariant, getRandomRun, getRandomParts, getRandomInt } from "../../utils/order";
 let parts = getRandomParts()
 
 beforeEach(async () => {
@@ -93,7 +93,7 @@ describe('POST /orders', () => {
     const response = await request(app)
     .post('/orders')
     .send({
-      orderNumber: 14452,
+      orderNumber: getRandomInt(1, 10000),
       dueDate: '20',
       createdBy: '',
       productType: 'hardcover_book',
@@ -113,7 +113,7 @@ describe('POST /orders', () => {
   const response = await request(app)
   .post('/orders')
   .send({
-    orderNumber: 14452,
+    orderNumber: getRandomInt(1, 10000),
     dueDate: '2026-08-01',
     createdBy: id,
     productType: 'invalid type',
@@ -133,7 +133,7 @@ describe('POST /orders', () => {
   const response = await request(app)
   .post('/orders')
   .send({
-    orderNumber: 14452,
+    orderNumber: getRandomInt(1, 10000),
     dueDate: '2026-08-01',
     createdBy: id,
     productType: 'hardcover_book',
@@ -153,7 +153,7 @@ describe('POST /orders', () => {
   const response = await request(app)
   .post('/orders')
   .send({
-    orderNumber: 14452,
+    orderNumber: getRandomInt(1, 10000),
     dueDate: '2026-08-01',
     createdBy: id,
     productType: 'hardcover_book',
@@ -173,7 +173,7 @@ describe('POST /orders', () => {
   const response = await request(app)
   .post('/orders')
   .send({
-    orderNumber: 14452,
+    orderNumber: getRandomInt(1, 10000),
     dueDate: '2026-08-01',
     createdBy: id,
     productType: 'hardcover_book',
@@ -194,7 +194,7 @@ describe('POST /orders', () => {
   const response = await request(app)
   .post('/orders')
   .send({
-    orderNumber: 14452,
+    orderNumber: getRandomInt(1, 10000),
     dueDate: '2026-08-01',
     createdBy: id,
     productType: 'hardcover_book',
@@ -216,7 +216,7 @@ describe('POST /orders', () => {
   const response = await request(app)
   .post('/orders')
   .send({
-    orderNumber: 14452,
+    orderNumber: getRandomInt(1, 10000),
     dueDate: '2026-08-01',
     createdBy: id,
     productType: 'hardcover_book',
@@ -229,6 +229,70 @@ describe('POST /orders', () => {
   
   expect(response.status).toBe(400);
   expect(response.body.message).toBe('variant must be one of: V4, V8, V16, V24, V32, V64, COVER');
+  });
+
+  it('should return 400 if order parts variants are duplicated', async () => {
+  const { token, user: { id } } = await getAuthToken();
+  const parts = [
+    { variant: 'V16', runs: getRandomRun(), part_quantity: getRandomQuantity() },
+    { variant: 'V16', runs: getRandomRun(), part_quantity: getRandomQuantity() }
+  ]
+
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber: getRandomInt(1, 10000),
+    dueDate: '2026-08-01',
+    createdBy: id,
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+    customer: getRandomClient(),
+    numberOfPages: getRandomEvenPages(),
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe('Order parts variants must be unique');
+  });
+
+  it('should allow cover without runs', async () => {
+  const orderNumber = getRandomInt(1, 10000);
+  const { token, user } = await getAuthToken();
+  const parts = [
+    { variant: 'V16', runs: getRandomRun(), part_quantity: getRandomQuantity() },
+    { variant: 'COVER', part_quantity: getRandomQuantity() }
+  ]
+
+
+  const response = await request(app)
+  .post('/orders')
+  .send({
+    orderNumber,
+    dueDate: new Date('2026-08-01'),
+    productType: 'hardcover_book',
+    quantity: getRandomQuantity(),
+    customer: getRandomClient(),
+    numberOfPages: getRandomEvenPages(),
+    created_by: user.id,
+    parts
+  })
+  .set("Authorization", `Bearer ${token}`);
+  console.log(response)
+
+  expect(response.status).toBe(201);
+
+  const orderParts = await prisma.order_parts.findMany({
+    where: {
+      order: {
+        order_number: orderNumber
+      }
+    }
+  });
+  const cover = orderParts.find(part => part.variant === 'COVER');
+
+  expect(cover).toBeDefined();
+  expect(cover?.runs).toBeNull();
   });
 
   it('should return 400 if runs are not between 1 and 100', async () => {

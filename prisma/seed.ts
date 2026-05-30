@@ -2,7 +2,7 @@ import { PrismaClient, Variant, employee_role, product_type } from '@prisma/clie
 import bcrypt from 'bcrypt';
 import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
-import { getWorkflow, stepScope, workflow, } from '../src/modules/orders/orders.workflow';
+import { COVER_VARIANT, getPartsForStep, getWorkflow, stepScope, workflow, } from '../src/modules/orders/orders.workflow';
 import { OrderStatus } from '../src/types/orderStatus';
 
 
@@ -14,7 +14,7 @@ const DEFAULT_COUNT = 25;
 const MAX_COUNT = 5000;
 
 const PRODUCT_TYPES = Object.values(product_type);
-const VARIANTS = Object.values(Variant).filter((variant) => variant !== 'COVER');
+const VARIANTS = Object.values(Variant).filter((variant) => variant !== COVER_VARIANT);
 const READY_STATUSES = new Set<SeedExecutionStatus>(['active', 'paused', 'done']);
 
 const LOGIN_MAP: Record<employee_role, string> = {
@@ -71,7 +71,7 @@ type OrderPartSeed = {
   id: string;
   order_id: string;
   variant: Variant;
-  runs: number;
+  runs?: number | null;
   part_quantity: number;
 };
 
@@ -212,6 +212,7 @@ async function getNextOrderNumberStart() {
 
 function buildOrderParts(orderId: string, orderQuantity: number) {
   const partCount = randInt(1, 6);
+  const variants = shuffle(VARIANTS).slice(0, partCount);
   const basePartQuantity = clamp(
     roundTo50(orderQuantity + randInt(0, Math.max(50, Math.round(orderQuantity * 0.05)))),
     50,
@@ -220,13 +221,22 @@ function buildOrderParts(orderId: string, orderQuantity: number) {
 
   const parts: OrderPartSeed[] = [];
 
-  for (let index = 0; index < partCount; index += 1) {
+  for (const variant of variants) {
     parts.push({
       id: randomUUID(),
       order_id: orderId,
-      variant: pick(VARIANTS),
+      variant,
       runs: randInt(1, 12),
       part_quantity: basePartQuantity,
+    });
+  }
+
+  if (Math.random() < 0.45) {
+    parts.push({
+      id: randomUUID(),
+      order_id: orderId,
+      variant: COVER_VARIANT,
+      part_quantity: orderQuantity,
     });
   }
 
@@ -309,6 +319,17 @@ function weightedPick<T>(items: Array<[T, number]>) {
   }
 
   return items[items.length - 1][0];
+}
+
+function shuffle<T>(items: T[]) {
+  const copy = [...items];
+
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const swapIndex = randInt(0, index);
+    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+  }
+
+  return copy;
 }
 
 function computeProgressQty(status: SeedExecutionStatus, inputQty: number) {
@@ -432,7 +453,7 @@ async function seedOrder(ctx: {
       }
 
       if (dependencyScope === 'per_part') {
-        return orderParts.map((part) =>
+        return getPartsForStep(orderParts, dependencyStep).map((part) =>
           stepStates.get(getStateKey(dependencyStep, part.id))
         );
       }
@@ -492,7 +513,7 @@ async function seedOrder(ctx: {
       workflowSteps.length === 1 ? 1 : stepIndex / (workflowSteps.length - 1);
     const instanceIds =
       scope === 'per_part'
-        ? orderParts.map((part) => part.id)
+        ? getPartsForStep(orderParts, step).map((part) => part.id)
         : [null];
 
     for (const orderPartId of instanceIds) {
@@ -623,7 +644,7 @@ async function seedOrder(ctx: {
     const scope = stepScope[step] as WorkflowScope;
 
     if (scope === 'per_part') {
-      const totalQty = orderParts.reduce((sum, part) => {
+      const totalQty = getPartsForStep(orderParts, step).reduce((sum, part) => {
         const state = stepStates.get(getStateKey(step, part.id));
         return sum + (state?.progressQty ?? 0);
       }, 0);

@@ -217,6 +217,22 @@
     addCoverBtn.style.display = document.querySelector(".cover-row") ? "none" : "";
   }
 
+  function getVariantSelects() {
+    return Array.from(document.querySelectorAll(".part-row:not(.cover-row) .variant"));
+  }
+
+  function updateVariantOptions() {
+    const selectedVariants = new Set(
+      getVariantSelects().map(select => select.value)
+    );
+
+    getVariantSelects().forEach(select => {
+      Array.from(select.options).forEach(option => {
+        option.disabled = option.value !== select.value && selectedVariants.has(option.value);
+      });
+    });
+  }
+
   function createPartRow() {
     const row = document.createElement("div");
     row.className = "part-row";
@@ -249,9 +265,24 @@
 
     row.querySelector(".remove-btn").addEventListener("click", () => {
       row.remove();
+      updateVariantOptions();
     });
 
     partsContainer.appendChild(row);
+    const selectedVariants = new Set(
+      getVariantSelects()
+        .filter(select => select !== row.querySelector(".variant"))
+        .map(select => select.value)
+    );
+    const select = row.querySelector(".variant");
+    const availableOption = Array.from(select.options).find(option => !selectedVariants.has(option.value));
+
+    if (availableOption) {
+      select.value = availableOption.value;
+    }
+
+    select.addEventListener("change", updateVariantOptions);
+    updateVariantOptions();
   }
 
   function createCoverRow() {
@@ -260,7 +291,6 @@
 
     row.innerHTML = `
       <input type="hidden" class="variant" value="COVER" />
-      <input type="hidden" class="runs" value="1" />
 
       <div>
         <label>Cover quantity</label>
@@ -330,12 +360,24 @@
     const parts = [];
 
     document.querySelectorAll(".part-row").forEach(row => {
-      parts.push({
+      const part = {
         variant: row.querySelector(".variant").value,
-        runs: Number(row.querySelector(".runs").value),
         part_quantity: Number(row.querySelector(".partQuantity").value)
-      });
+      };
+      const runsInput = row.querySelector(".runs");
+
+      if (runsInput) {
+        part.runs = Number(runsInput.value);
+      }
+
+      parts.push(part);
     });
+
+    const variants = parts.map(part => part.variant);
+    if (new Set(variants).size !== variants.length) {
+      status.innerText = "Error: Order parts variants must be unique";
+      return;
+    }
 
     try {
       const res = await fetch('/orders', {

@@ -6,13 +6,17 @@ import { Variant } from '@prisma/client';
 
 const variants = Object.values(Variant).filter((variant) => variant !== 'COVER')
 
-const getRandomInt = (min: number, max: number) =>
+export const getRandomInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
 
 export function getRandomParts() {
   const count = getRandomInt(1, 6);
-  const parts = Array.from({ length: count }, () => ({
-    variant: getRandomVariant(),
+  const selectedVariants = [...variants]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, count);
+
+  const parts = selectedVariants.map((variant) => ({
+    variant,
     runs: getRandomRun(),
     part_quantity: getRandomQuantity()
   }));
