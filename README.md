@@ -77,6 +77,13 @@ Steps can operate at different levels of granularity:
 -   **`aggregated`**: The step requires all `per_part` dependencies to be satisfied before it can start (e.g., `sewing`).
 -   **`per_order`**: The step is executed only once for the entire order (e.g., `hardcover_binding`).
 
+### Product Variants & Workflow Routing
+
+The system uses  **`per_part`** granularity to manage distinct production components, with specific routing rules enforced by variantExclusions:
+- Granular Processing: Steps like printing and folding operate at the per_part level, meaning every component (e.g., V16, V32, V64) is tracked and processed individually.
+- Variant-Specific Routing: While printing supports the full range of components including COVER, other per_part steps (such as folding or folding_with_milling) are configured with variantExclusions to restrict COVER from entering the assembly stream.
+- Workflow Integrity: By combining per_part logic with explicit exclusions, the system ensures that each component—whether it is a book block or a cover—only participates in the workflow steps relevant to its physical manufacturing requirements.
+  
 ### Role-Based Access Control (RBAC)
 
 Access to execute each workflow step is restricted by user role.
