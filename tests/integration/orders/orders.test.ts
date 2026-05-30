@@ -188,9 +188,9 @@ describe('POST /orders', () => {
   expect(response.body.message).toBe('Number of pages must be even');
   });
 
-  it('should return 400 if parts is not between  1 and 6 parts', async () => {
+  it('should return 400 if parts is not between 1 and 7 parts', async () => {
   const { token, user: { id } } = await getAuthToken();
-  const parts = [{},{},{},{},{},{},{}]
+  const parts = [{},{},{},{},{},{},{},{}]
   const response = await request(app)
   .post('/orders')
   .send({
@@ -206,10 +206,10 @@ describe('POST /orders', () => {
   .set("Authorization", `Bearer ${token}`);
   
   expect(response.status).toBe(400);
-  expect(response.body.message).toBe('You can add between 1 and 6 parts per order');
+  expect(response.body.message).toBe('You can add between 1 and 7 parts per order');
   });
 
-  it('should return 400 if variant is not one of: V4, V8, V16, V24, V32, V64', async () => {
+  it('should return 400 if variant is not one of: V4, V8, V16, V24, V32, V64, COVER', async () => {
   const { token, user: { id } } = await getAuthToken();
   const parts = [{ variant: 'wrongVariant', runs: getRandomRun(), part_quantity: getRandomQuantity() }]
  
@@ -228,7 +228,7 @@ describe('POST /orders', () => {
   .set("Authorization", `Bearer ${token}`);
   
   expect(response.status).toBe(400);
-  expect(response.body.message).toBe('variant must be one of: V4, V8, V16, V24, V32, V64');
+  expect(response.body.message).toBe('variant must be one of: V4, V8, V16, V24, V32, V64, COVER');
   });
 
   it('should return 400 if runs are not between 1 and 100', async () => {

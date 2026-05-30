@@ -134,6 +134,7 @@ enum Variant {
   V24
   V32
   V64
+  COVER
 }
 
 

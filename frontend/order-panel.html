@@ -450,6 +450,7 @@
     }
 
     function formatVariant(value) {
+      if (String(value).toUpperCase() === "COVER") return "Cover";
       return String(value ?? "variant").replace(/^V/i, "");
     }
 

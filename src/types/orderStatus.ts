@@ -44,7 +44,7 @@ export type StepState = 'NOT_STARTED' | 'WAITING' | 'ACTIVE' | 'PAUSED' | 'DONE'
 export type OrderStateV2<T extends ProductTypeV2 = ProductTypeV2> =
   Record<OrderStatusV2<T>, StepState>;
 
-export type partVariant = 'V4' | 'V8' | 'V16'| 'V24' | 'V32' | 'V64'
+export type partVariant = 'V4' | 'V8' | 'V16'| 'V24' | 'V32' | 'V64' | 'COVER'
 export type WorkflowProductType = keyof typeof workflow;
 export type WorkflowStep = keyof typeof stepScope;
 export type WorkflowMap = Partial<Record<OrderStatus, OrderStatus[]>>;

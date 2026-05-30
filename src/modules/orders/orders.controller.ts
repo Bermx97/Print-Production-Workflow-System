@@ -4,7 +4,7 @@ import prisma from '../../lib/prisma';
 import { HttpError } from '../../utils/errors';
 import { BLOCK_START_STATUSES, getScope, getWorkflowMap, IN_PROGRESS_STATUSES } from './domain/workflowContext';
 import { createOrderService, createStepEventV2, getAllOrdersService, getOrderPartsService, getOrderService, getVisibleOrdersForRole, getMyActiveStepsService } from './orders.service';
-import { getWorkflow as getWorkflowSequence, roleStatusMap } from './orders.workflow';
+import { getPartsForStep, getWorkflow as getWorkflowSequence, roleStatusMap } from './orders.workflow';
 import { getRoleSteps } from './workflow/access/role.access';
 import { getLatestExecution } from './workflow/queries/execution.queries';
 import { canStartStepForPart } from './workflow/rules/dependency.rules';
@@ -163,8 +163,13 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
     });
   }
 
+  const scope = getScope(step);
+  const visibleOrderParts = scope === 'per_part'
+    ? getPartsForStep(order.order_parts, step)
+    : order.order_parts;
+
   const parts = await Promise.all(
-    order.order_parts.map(async (part) => {
+    visibleOrderParts.map(async (part) => {
       const executions = await prisma.step_execution.findMany({
         where: {
           order_id: order.id,
@@ -186,7 +191,6 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
         };
       }
 
-      const scope = getScope(step);
       const canStart =
         scope === 'per_part'
           ? await canStartStepForPart({

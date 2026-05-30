@@ -15,20 +15,20 @@ export const workflow: Record< ProductType, Partial<Record<OrderStatus, OrderSta
     printing: [],
     folding: ['printing'],
     sewing: ['folding'],
-    case_making: ['folding'],
-    hardcover_binding: ['sewing', 'case_making']
+    case_making: ['folding', 'printing'],
+    hardcover_binding: ['sewing', 'case_making', 'printing']
   },
 
   perfect_bound_book: {
     printing: [],
     folding_with_milling: ['printing'],
-    binding: ['folding_with_milling']
+    binding: ['folding_with_milling', 'printing']
   },
 
   saddle_stitching: {
     printing: [],
     folding: ['printing'],
-    stitching: ['folding']
+    stitching: ['folding', 'printing']
   }
 };
 
@@ -43,11 +43,36 @@ export const stepScope = {
   stitching: 'per_order'
 } as const;
 
-/*
-export const mergeGroups = {
-  post_folding: ['sewing', 'case_making', 'hardcover_binding', 'binding', 'stitching' ]
-}; 
-*/
+export const COVER_VARIANT = 'COVER';
+
+export const ORDER_PART_VARIANTS = [
+  'V4',
+  'V8',
+  'V16',
+  'V24',
+  'V32',
+  'V64',
+  COVER_VARIANT
+] as const;
+
+export const variantExclusions: Partial<Record<OrderStatus, readonly string[]>> = {
+  folding: [COVER_VARIANT],
+  folding_with_milling: [COVER_VARIANT],
+  sewing: [COVER_VARIANT],
+  case_making: [COVER_VARIANT]
+} as const;
+
+type OrderPartLike = {
+  variant?: string | null;
+};
+
+export function isPartApplicableToStep(part: OrderPartLike, step: OrderStatus) {
+  return !variantExclusions[step]?.includes(String(part.variant ?? ''));
+}
+
+export function getPartsForStep<T extends OrderPartLike>(parts: T[], step: OrderStatus) {
+  return parts.filter((part) => isPartApplicableToStep(part, step));
+}
 
 export const roleStatusMap: Record<employee_role, RoleAccess> = {
   printer_operator: { type: 'LIMITED', steps: ['printing'] },

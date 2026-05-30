@@ -7,7 +7,7 @@ import { handleEnd } from './handlers/handleEnd';
 import { handlePause } from './handlers/handlePause';
 import { handleResume } from './handlers/handleResume';
 import { handleStart } from './handlers/handleStart';
-import { roleStatusMap, workflow } from './orders.workflow';
+import { getPartsForStep, roleStatusMap, workflow } from './orders.workflow';
 import { findCurrentExecution } from './workflow/queries/execution.queries';
 import { validateStepCanStart } from './workflow/rules/dependency.rules';
 import { getRoleSteps } from './workflow/access/role.access';
@@ -263,7 +263,7 @@ export const getVisibleOrdersForRole = async (role: employee_role, access: any) 
 
       for (const step of allowedSteps) {
         const scope = getScope(step);
-        const partsToCheck = scope === 'per_part' ? order.order_parts : [undefined];
+        const partsToCheck = scope === 'per_part' ? getPartsForStep(order.order_parts, step) : [undefined];
 
         for (const part of partsToCheck) {
           const inProgress = part === undefined

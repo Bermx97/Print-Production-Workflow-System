@@ -113,13 +113,19 @@
       background: #555;
     }
 
+    #addCoverBtn,
     #addPartBtn {
       margin-top: 10px;
       background: #222;
     }
 
+    #addCoverBtn:hover,
     #addPartBtn:hover {
       background: #333;
+    }
+
+    .cover-row {
+      grid-template-columns: 1fr auto;
     }
 
     #logoutBtn {
@@ -180,6 +186,10 @@
 
       <div id="partsContainer"></div>
 
+      <button type="button" id="addCoverBtn">
+        + Add cover
+      </button>
+
       <button type="button" id="addPartBtn">
         + Add variant
       </button>
@@ -200,7 +210,12 @@
   const status = document.getElementById("status");
 
   const partsContainer = document.getElementById("partsContainer");
+  const addCoverBtn = document.getElementById("addCoverBtn");
   const addPartBtn = document.getElementById("addPartBtn");
+
+  function updateCoverButtonVisibility() {
+    addCoverBtn.style.display = document.querySelector(".cover-row") ? "none" : "";
+  }
 
   function createPartRow() {
     const row = document.createElement("div");
@@ -239,13 +254,62 @@
     partsContainer.appendChild(row);
   }
 
-  const MAX_PARTS = 6;
+  function createCoverRow() {
+    const row = document.createElement("div");
+    row.className = "part-row cover-row";
+
+    row.innerHTML = `
+      <input type="hidden" class="variant" value="COVER" />
+      <input type="hidden" class="runs" value="1" />
+
+      <div>
+        <label>Cover quantity</label>
+        <input type="number" class="partQuantity" min="1" value="1" />
+      </div>
+
+      <button type="button" class="remove-btn">X</button>
+    `;
+
+    row.querySelector(".remove-btn").addEventListener("click", () => {
+      row.remove();
+      updateCoverButtonVisibility();
+    });
+
+    partsContainer.appendChild(row);
+    updateCoverButtonVisibility();
+  }
+
+  const MAX_VARIANTS = 6;
+  const MAX_PARTS = 7;
+
+  addCoverBtn.addEventListener("click", () => {
+    const count = document.querySelectorAll(".part-row").length;
+    const hasCover = Boolean(document.querySelector(".cover-row"));
+
+    if (hasCover) {
+      status.innerText = "Cover already added";
+      return;
+    }
+
+    if (count >= MAX_PARTS) {
+      status.innerText = "Maximum 7 parts allowed";
+      return;
+    }
+
+    createCoverRow();
+  });
 
   addPartBtn.addEventListener("click", () => {
     const count = document.querySelectorAll(".part-row").length;
+    const variantCount = document.querySelectorAll(".part-row:not(.cover-row)").length;
+
+    if (variantCount >= MAX_VARIANTS) {
+      status.innerText = "Maximum 6 variants allowed";
+      return;
+    }
 
     if (count >= MAX_PARTS) {
-      status.innerText = "Maximum 6 parts allowed";
+      status.innerText = "Maximum 7 parts allowed";
       return;
     }
 
@@ -300,6 +364,7 @@
       status.innerText = "Order created successfully";
       form.reset();
       partsContainer.innerHTML = "";
+      updateCoverButtonVisibility();
       createPartRow();
 
     } catch (err) {

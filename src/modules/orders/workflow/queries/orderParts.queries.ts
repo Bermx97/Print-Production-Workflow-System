@@ -5,7 +5,8 @@ export const getOrderParts = async (tx: any, orderId: string) => {
       order_id: orderId
     },
     select: {
-      id: true
+      id: true,
+      variant: true
     }
   });
 };

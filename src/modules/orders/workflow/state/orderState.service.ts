@@ -2,6 +2,7 @@ import { WorkflowMap, OrderStatus } from "../../../../types/orderStatus";
 import prisma from "../../../../lib/prisma";
 import { BLOCK_START_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
+import { getPartsForStep } from "../../orders.workflow";
 
 export const getOrderState = async (order: any, wf: WorkflowMap, executionsForOrder?: any[]) => {
   const state: Record<string, string> = {};
@@ -15,7 +16,7 @@ export const getOrderState = async (order: any, wf: WorkflowMap, executionsForOr
     const scope = getScope(step);
 
     if (scope === 'per_part') {
-      const partIds = order.order_parts.map((part: any) => part.id);
+      const partIds = getPartsForStep(order.order_parts, step).map((part: any) => part.id);
 
       const stepExecutions = executions.filter((ex: any) => 
         ex.step_type === step &&

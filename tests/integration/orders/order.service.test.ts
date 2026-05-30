@@ -23,8 +23,18 @@ describe('Workflow V2 Optimization - Unit Tests', () => {
     id: 123,
     product_type: 'TEST_PRODUCT',
     order_parts: [
-      { id: 'part-1' },
-      { id: 'part-2' }
+      { id: 'part-1', variant: 'V16' },
+      { id: 'part-2', variant: 'V32' }
+    ]
+  };
+
+  const mockOrderWithCover = {
+    id: 456,
+    product_type: 'TEST_PRODUCT',
+    order_parts: [
+      { id: 'part-1', variant: 'V16' },
+      { id: 'part-2', variant: 'V32' },
+      { id: 'cover', variant: 'COVER' }
     ]
   };
 
@@ -58,6 +68,17 @@ describe('Workflow V2 Optimization - Unit Tests', () => {
       const state = await getOrderState(mockOrder, mockWorkflow, mockExecutions);
       
       expect(state['folding']).toBe('WAITING');
+    });
+
+    it('should ignore cover when setting folding state', async () => {
+      const mockExecutions = [
+        { step_type: 'folding', status: 'done', order_part_id: 'part-1', started_at: new Date() },
+        { step_type: 'folding', status: 'done', order_part_id: 'part-2', started_at: new Date() }
+      ];
+
+      const state = await getOrderState(mockOrderWithCover, mockWorkflow, mockExecutions);
+
+      expect(state['folding']).toBe('DONE');
     });
   });
 
@@ -117,6 +138,37 @@ describe('Workflow V2 Optimization - Unit Tests', () => {
       }, mockExecutions);
 
       expect(canStart).toBe(true);
+    });
+
+    it('should ignore cover when an aggregated step waits for folding', async () => {
+      const mockExecutions = [
+        { step_type: 'folding', status: 'active', order_part_id: 'part-1', started_at: new Date() },
+        { step_type: 'folding', status: 'active', order_part_id: 'part-2', started_at: new Date() }
+      ];
+
+      const canStart = await canStartStepForPart({
+        order: mockOrderWithCover,
+        wf: mockWorkflow,
+        step: 'sewing' as step_name,
+        orderPartId: null
+      }, mockExecutions);
+
+      expect(canStart).toBe(true);
+    });
+
+    it('should not allow cover to start folding', async () => {
+      const mockExecutions = [
+        { step_type: 'printing', status: 'done', order_part_id: 'cover', started_at: new Date() }
+      ];
+
+      const canStart = await canStartStepForPart({
+        order: mockOrderWithCover,
+        wf: mockWorkflow,
+        step: 'folding' as step_name,
+        orderPartId: 'cover'
+      }, mockExecutions);
+
+      expect(canStart).toBe(false);
     });
   });
 });

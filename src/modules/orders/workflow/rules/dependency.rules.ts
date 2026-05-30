@@ -7,7 +7,7 @@ import { getScope, getStepDependencies } from "../../domain/workflowContext";
 import { employee_role } from "@prisma/client";
 import { assertRoleCanAccessStep } from "../../domain/roleGuard";
 import { getOrderParts } from "../queries/orderParts.queries";
-import { stepScope } from "../../orders.workflow";
+import { getPartsForStep, isPartApplicableToStep, stepScope } from "../../orders.workflow";
 
 export const validateStepCanStart = async (ctx: {
   tx: any;
@@ -25,6 +25,10 @@ export const validateStepCanStart = async (ctx: {
   }
 
   const scope = stepScope[step as WorkflowStep];
+
+  if (scope === 'per_part' && !orderPartId) {
+    throw new HttpError('Order part required for this step', 400);
+  }
 
   const currentExecution = await findCurrentExecution({
     tx,
@@ -48,6 +52,25 @@ export const validateStepCanStart = async (ctx: {
   const dependencies = getStepDependencies(order, step);
 
   if (scope === 'per_part') {
+    const orderPart = await tx.order_parts.findFirst({
+      where: {
+        id: orderPartId,
+        order_id: order.id
+      },
+      select: {
+        id: true,
+        variant: true
+      }
+    });
+
+    if (!orderPart) {
+      throw new HttpError('Order part not found', 404);
+    }
+
+    if (!isPartApplicableToStep(orderPart, step as OrderStatus)) {
+      throw new HttpError(`Cannot start ${step}. Variant is not used in this step`, 409);
+    }
+
     for (const dependencyStep of dependencies) {
       const dependencyExecution = await tx.step_execution.findFirst({
         where: {
@@ -72,9 +95,11 @@ export const validateStepCanStart = async (ctx: {
   }
 
   if (scope === 'aggregated') {
-    const orderParts = await getOrderParts(tx, order.id);
+    const allOrderParts = await getOrderParts(tx, order.id);
 
     for (const dependencyStep of dependencies) {
+      const orderParts = getPartsForStep(allOrderParts, dependencyStep as OrderStatus);
+
       const readyExecutions = await tx.step_execution.findMany({
         where: {
           order_id: order.id,
@@ -115,7 +140,8 @@ export const validateStepCanStart = async (ctx: {
       const dependencyScope = stepScope[dependencyStep];
 
       if (dependencyScope === 'per_part') {
-        const orderParts = await getOrderParts(tx, order.id);
+        const allOrderParts = await getOrderParts(tx, order.id);
+        const orderParts = getPartsForStep(allOrderParts, dependencyStep as OrderStatus);
 
         const readyExecutions = await tx.step_execution.findMany({
           where: {
@@ -178,7 +204,8 @@ export const allPartsReadyInDependency = async (
 ) => {
   const { order, dependencyStep } = ctx;
   const dependencyScope = getScope(dependencyStep);
-  const partIds = order.order_parts.map((part: any) => part.id);
+  const partsForStep = getPartsForStep(order.order_parts, dependencyStep as OrderStatus);
+  const partIds = partsForStep.map((part: any) => part.id);
 
   if (dependencyScope !== 'per_part') {
     return isStepStartedOrDone({
@@ -208,6 +235,16 @@ export const canStartStepForPart = async (
 ) => {
   const { order, wf, step, orderPartId } = ctx;
   const scope = getScope(step);
+
+  if (scope === 'per_part' && orderPartId) {
+    const orderPart = order.order_parts?.find((part: any) =>
+      String(part.id) === String(orderPartId)
+    );
+
+    if (orderPart && !isPartApplicableToStep(orderPart, step as OrderStatus)) {
+      return false;
+    }
+  }
 
   const alreadyStartedOrDone = await hasStartedOrFinishedExecution({
     orderId: order.id,

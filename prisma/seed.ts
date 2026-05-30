@@ -14,7 +14,7 @@ const DEFAULT_COUNT = 25;
 const MAX_COUNT = 5000;
 
 const PRODUCT_TYPES = Object.values(product_type);
-const VARIANTS = Object.values(Variant);
+const VARIANTS = Object.values(Variant).filter((variant) => variant !== 'COVER');
 const READY_STATUSES = new Set<SeedExecutionStatus>(['active', 'paused', 'done']);
 
 const LOGIN_MAP: Record<employee_role, string> = {

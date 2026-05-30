@@ -1,7 +1,7 @@
 import { OrderStatusV2 } from '../../../types/orderStatus';
 import { assertRoleCanAccessStep } from '../domain/roleGuard';
 import { HttpError } from '../../../utils/errors';
-import { stepScope } from '../orders.workflow';
+import { getPartsForStep, stepScope } from '../orders.workflow';
 
 type WorkflowStep = keyof typeof stepScope;
 
@@ -68,14 +68,16 @@ const assertDependenciesDone = async (ctx: {
         continue;
       }
 
-      const orderParts = await tx.order_parts.findMany({
+      const allOrderParts = await tx.order_parts.findMany({
         where: {
           order_id: order.id
         },
         select: {
-          id: true
+          id: true,
+          variant: true
         }
       });
+      const orderParts = getPartsForStep(allOrderParts, dependencyStep as WorkflowStep);
 
       const doneExecutions = await tx.step_execution.findMany({
         where: {

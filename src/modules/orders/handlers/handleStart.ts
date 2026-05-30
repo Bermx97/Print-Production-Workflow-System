@@ -4,7 +4,7 @@ import { OrderStatus } from '../../../types/orderStatus';
 import { HttpError } from '../../../utils/errors';
 import { assertRoleCanAccessStep } from '../domain/roleGuard';
 import { READY_STATUSES } from '../domain/workflowContext';
-import { stepScope, workflow } from '../orders.workflow';
+import { getPartsForStep, isPartApplicableToStep, stepScope, workflow } from '../orders.workflow';
 import { employee_role } from '@prisma/client';
 
 export const handleStart = async (ctx: {
@@ -29,18 +29,41 @@ export const handleStart = async (ctx: {
     throw new HttpError('Order part required for this step', 400);
   }
 
+  if (scope === 'per_part') {
+    const orderPart = await tx.order_parts.findFirst({
+      where: {
+        id: orderPartId,
+        order_id: order.id
+      },
+      select: {
+        id: true,
+        variant: true
+      }
+    });
+
+    if (!orderPart) {
+      throw new HttpError('Order part not found', 404);
+    }
+
+    if (!isPartApplicableToStep(orderPart, step as OrderStatus)) {
+      throw new HttpError(`Cannot start ${step}. Variant is not used in this step`, 409);
+    }
+  }
+
   if (scope === 'aggregated') {
     const productType = order.product_type as ProductType;
     const currentStep = step as OrderStatus;
 
     const dependencies = workflow[productType]?.[currentStep] ?? [];
 
-    const orderParts = await tx.order_parts.findMany({
+    const allOrderParts = await tx.order_parts.findMany({
       where: { order_id: order.id },
-      select: { id: true }
+      select: { id: true, variant: true }
     });
 
     for (const dependencyStep of dependencies) {
+      const orderParts = getPartsForStep(allOrderParts, dependencyStep);
+
       const readyExecutions = await tx.step_execution.findMany({
         where: {
           order_id: order.id,
@@ -155,12 +178,14 @@ const canStartStepV2 = async (ctx: {
   }
 
   if (scope === 'aggregated') {
-    const orderParts = await tx.order_parts.findMany({
+    const allOrderParts = await tx.order_parts.findMany({
       where: { order_id: order.id },
-      select: { id: true }
+      select: { id: true, variant: true }
     });
 
     for (const dependencyStep of dependencies) {
+      const orderParts = getPartsForStep(allOrderParts, dependencyStep);
+
       const readyExecutions = await tx.step_execution.findMany({
         where: {
           order_id: order.id,

@@ -4,7 +4,7 @@ import prisma from '../../src/lib/prisma'
 import { workflow } from '../../src/modules/orders/orders.workflow';
 import { Variant } from '@prisma/client';
 
-const variants = Object.values(Variant)
+const variants = Object.values(Variant).filter((variant) => variant !== 'COVER')
 
 const getRandomInt = (min: number, max: number) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
