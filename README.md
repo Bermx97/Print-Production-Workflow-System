@@ -137,7 +137,7 @@ The system uses the following enumerations to maintain data integrity across the
 | Enum | Values |
 | :--- | :--- |
 | **Step Scope** | `per_part`, `aggregated`, `per_order` |
-| **Variant** | `V4`, `V8`, `V16`, `V24`, `V32`, `V64` |
+| **Variant** | `COVER`, `V4`, `V8`, `V16`, `V24`, `V32`, `V64` |
 
 </details>
 
@@ -218,6 +218,7 @@ npm test
 
 -   `GET /`: Get a list of all orders.
 -   `GET /my`: Get orders visible to the authenticated user based on their role and step assignments.
+-   `GET /my/active`: Retrieve the currently active workflow steps for the authenticated user.
 -   `POST /`: Create a new order (requires `admin`, `seller`, or `technologist` role).
 -   `GET /:orderNumber`: Get detailed information for a single order.
 -   `GET /:orderNumber/parts`: Get the status of all parts for an order, relevant to the user's role.
