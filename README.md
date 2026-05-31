@@ -19,6 +19,7 @@
 ### Demo Credentials (Test Accounts)
 
 To explore the application from the perspective of different system roles, you can use the following test accounts:
+<details>
 
 | Employee Role | Login | Password |
 | :--- | :--- | :--- |
@@ -31,8 +32,7 @@ To explore the application from the perspective of different system roles, you c
 | **Worker (Perfect Binding)** | `perfect` | `perfect` |
 | **Worker (Stitching)** | `stitching` | `stitching` |
 
-
----
+</details>
 
 ## Overview
 
