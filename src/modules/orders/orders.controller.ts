@@ -222,7 +222,6 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
 export const getOrderParts = async (req: Request, res: Response) => {
   const orderNumber = Number(req.params.orderNumber);
   const parts = await getOrderPartsService(orderNumber);
-  console.log(parts)
   return res.json({ parts: parts });
 };
 

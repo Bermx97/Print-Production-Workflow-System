@@ -1,13 +1,9 @@
 import { employee_role } from '@prisma/client';
 import { OrderStatus, ORDER_STATUSES, ProductType } from '../../types/orderStatus';
 
-
-
 export type RoleAccess =
   | { type: 'ALL' }
   | { type: 'LIMITED'; steps: OrderStatus[] };
-
-
 
 export const workflow: Record< ProductType, Partial<Record<OrderStatus, OrderStatus[]>>> = {
 
@@ -57,9 +53,7 @@ export const ORDER_PART_VARIANTS = [
 
 export const variantExclusions: Partial<Record<OrderStatus, readonly string[]>> = {
   folding: [COVER_VARIANT],
-  folding_with_milling: [COVER_VARIANT],
-  sewing: [COVER_VARIANT],
-  case_making: [COVER_VARIANT]
+  folding_with_milling: [COVER_VARIANT]
 } as const;
 
 type OrderPartLike = {
