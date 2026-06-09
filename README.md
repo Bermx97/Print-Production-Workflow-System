@@ -127,7 +127,7 @@ A user can start a step only if:
 
 The schema is designed around the core concepts of orders, employees, and the event-sourcing tables `step_logs` and `step_execution`.
 
-<img width="1557" height="880" alt="Full Database Schema" src="https://github.com/user-attachments/assets/3ed60985-4733-4dd9-a7d9-bf6b59f7ec23" />
+<img width="1557" height="850" alt="DB" src="https://github.com/user-attachments/assets/829e38ba-3471-48df-bb96-75c1c527484f" />
 
 ### Data Models & Enums
 The system uses the following enumerations to maintain data integrity across the workflow engine:
