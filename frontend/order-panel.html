@@ -318,6 +318,7 @@
     <div class="top-bar">
       <button class="back-btn" onclick="window.location.href='/index.html'">Back to Orders</button>
       <button class="secondary" onclick="loadOrder()">Refresh</button>
+      <button class="analytics" id="analyticsBtn">Analytics</button>
       <div class="spacer"></div>
       <button class="secondary" onclick="logout()">Logout</button>
     </div>
@@ -410,6 +411,13 @@
         return {};
       }
     }
+
+    const params = new URLSearchParams(window.location.search);
+    const orderNumber = params.get("orderNumber");
+
+    document.getElementById("analyticsBtn").onclick = () => {
+      window.location.href = `/analytics.html?orderNumber=${orderNumber}`;
+    };
 
     function currentStepNeedsPart() {
       if (!currentRole) return true;

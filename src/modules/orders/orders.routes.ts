@@ -16,10 +16,10 @@ const router = express.Router();
 
 router.get('/', isAuthenticated, getOrders);
 router.get('/my', isAuthenticated, getVisibleOrders);
-router.get('/my/active', isAuthenticated, getMyActiveSteps)
-router.get('/:orderNumber/analytics', isAuthenticated, getAverageStepsSpeed)
-router.get('/:orderNumber/parts', isAuthenticated, getOrderPartsV2)
+router.get('/my/active', isAuthenticated, getMyActiveSteps);
 router.get('/:orderNumber', isAuthenticated, getOrderByNumber);
+router.get('/:orderNumber/analytics', isAuthenticated, getAverageStepsSpeed);
+router.get('/:orderNumber/parts', isAuthenticated, getOrderPartsV2);
 router.get('/:orderNumber/stats',isAuthenticated, getOrderStatsController);
 
 router.post('/:orderNumber/start', isAuthenticated, startStepV2);

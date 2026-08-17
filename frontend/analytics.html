@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Order Analytics</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1300px;
+      width: 100%;
+      padding: 45px;
+    }
+
+    h1 {
+      color: #ff2a2a;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+      font-size: 38px;
+    }
+
+    th:nth-child(1), td:nth-child(1) {
+      width: 220px; 
+      padding-right: 10px;
+    }
+
+    .top-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    button {
+      background: #ff2a2a;
+      border: none;
+      padding: 14px 22px;
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+      font-size: 17px;
+    }
+
+    button:hover {
+      background: #c90000;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.75;
+    }
+
+    .secondary {
+      background: #1f1f1f;
+      border: 1px solid #333;
+    }
+
+    .secondary:hover {
+      border-color: #ff2a2a;
+    }
+
+    .back-btn {
+      background: #ff2a2a;
+    }
+
+    .back-btn:hover {
+      background: #c90000;
+    }
+
+    .analytics-card {
+      background: #141414;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 22px;
+      border-left: 7px solid #ff2a2a;
+      box-shadow: 0 0 20px rgba(255, 42, 42, 0.15);
+    }
+
+    .analytics-title {
+      color: #ff2a2a;
+      font-weight: bold;
+      margin-bottom: 18px;
+      font-size: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #141414;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 18px;
+    }
+
+    th {
+      background: #1f1f1f;
+      color: #ff2a2a;
+      font-weight: bold;
+      border-bottom: 2px solid #333;
+    }
+
+    tr {
+      border-bottom: 1px solid #222;
+      transition: 0.2s;
+    }
+
+    tr:hover {
+      background: #1a1a1a;
+    }
+
+    #errorBox {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #ff2a2a;
+      color: white;
+      padding: 16px 22px;
+      border-radius: 10px;
+      display: none;
+      font-weight: bold;
+      z-index: 9999;
+      max-width: 400px;
+      font-size: 17px;
+    }
+
+    .muted {
+      color: #888;
+      font-size: 18px;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1 id="pageTitle">Order Analytics</h1>
+    
+    <div class="top-bar">
+      <button class="back-btn" id="backBtn">Back to Order</button>
+      <button class="secondary" onclick="loadAnalytics()">Refresh</button>
+      <div class="spacer"></div>
+      <button class="secondary" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="analytics-card">
+      <div class="analytics-title">Execution Speed & Performance</div>
+      <div id="statsContent">
+        <div class="muted">Loading analytics...</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="errorBox"></div>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const API = "/orders";
+
+    if (!token) {
+      window.location.href = "/login.html";
+    }
+
+    const AUTH_HEADER = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json"
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const orderNumber = params.get("orderNumber");
+
+    if (!orderNumber) {
+      window.location.href = "/index.html";
+    }
+
+    document.getElementById("backBtn").onclick = () => {
+      window.location.href = `/order-panel.html?orderNumber=${orderNumber}`;
+    };
+
+    document.getElementById("pageTitle").innerText = `Analytics: Order #${orderNumber}`;
+
+    function showError(message) {
+      const box = document.getElementById("errorBox");
+      box.innerText = message;
+      box.style.display = "block";
+
+      setTimeout(() => {
+        box.style.display = "none";
+      }, 4000);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+
+    const WORKFLOW_ORDER = [
+      "printing",
+      "folding",
+      "folding_with_milling",
+      "sewing",
+      "case_making",
+      "hardcover_binding",
+      "binding",
+      "stitching"
+    ];
+
+    async function loadAnalytics() {
+      const container = document.getElementById("statsContent");
+      container.innerHTML = `<div class="muted">Loading analytics...</div>`;
+
+      try {
+        const res = await fetch(`${API}/${orderNumber}/analytics`, {
+          headers: AUTH_HEADER
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+          showError(data?.message || "Failed to load analytics");
+          container.innerHTML = `<div class="muted">Failed to load analytics data.</div>`;
+          return;
+        }
+
+        renderTable(data);
+      } catch {
+        showError("Network error on LOAD");
+        container.innerHTML = `<div class="muted">Network error.</div>`;
+      }
+    }
+
+    function renderTable(stats) {
+      const container = document.getElementById("statsContent");
+
+      if (!Array.isArray(stats) || stats.length === 0) {
+        container.innerHTML = `<div class="muted">No completed step statistics available for this order yet.</div>`;
+        return;
+      }
+
+      const sortedStats = [...stats].sort((a, b) => {
+        const indexA = WORKFLOW_ORDER.indexOf(a.stepType);
+        const indexB = WORKFLOW_ORDER.indexOf(b.stepType);
+
+        const posA = indexA === -1 ? 999 : indexA;
+        const posB = indexB === -1 ? 999 : indexB;
+
+        if (posA !== posB) {
+          return posA - posB;
+        }
+
+        const varA = (a.variant || "").trim();
+        const varB = (b.variant || "").trim();
+
+        const isCoverOrEmptyA = varA === "" || varA === "-" || varA.toLowerCase() === "cover";
+        const isCoverOrEmptyB = varB === "" || varB === "-" || varB.toLowerCase() === "cover";
+
+        if (isCoverOrEmptyA && !isCoverOrEmptyB) return 1;
+        if (!isCoverOrEmptyA && isCoverOrEmptyB) return -1;
+        if (isCoverOrEmptyA && isCoverOrEmptyB) return 0;
+
+        const numA = parseInt(varA.replace(/\D/g, "")) || 0;
+        const numB = parseInt(varB.replace(/\D/g, "")) || 0;
+
+        return numB - numA;
+      });
+
+      let rows = sortedStats.map(item => {
+        const targetDisplay = (item.variant && item.variant.trim() !== "") 
+          ? escapeHtml(item.variant) 
+          : '-';
+
+        return `
+          <tr>
+            <td><strong>${escapeHtml(item.stepType)}</strong></td>
+            <td>${targetDisplay}</td>
+            <td>${escapeHtml(item.doneQuantity ?? 0)} pcs</td>
+            <td>${escapeHtml(item.durationMinutes)} min</td>
+            <td><strong style="color: #ffcc00;">${escapeHtml(item.average)} pcs/min</strong></td>
+          </tr>
+        `;
+      }).join("");
+
+      container.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Step Type</th>
+              <th>Variant</th>
+              <th>Done Quantity</th>
+              <th>Duration</th>
+              <th>Speed (Avg)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function logout() {
+      localStorage.removeItem("token");
+      window.location.href = "/login.html";
+    }
+
+    loadAnalytics();
+  </script>
+
+</body>
+
+</html>
