@@ -1,36 +1,36 @@
 import { Request, Response } from 'express';
 import { getOrderService, getOrderWithRelations } from './orders.service'
-import { workflow } from './orders.workflow';
 import { getStepSpeed, getOrderStatsService } from './analytics.service';
-import { OrderStatus } from '../../types/orderStatus';
-import prisma from '../../lib/prisma';
-import { step_event_type } from '@prisma/client';
 
-/*
 export const getAverageStepsSpeed = async (req: Request, res: Response) => {
   const { orderNumber } = req.params;
-  const order = await getOrderService(Number(orderNumber));
-  //const quantities = (order.step_quantities ?? {}) as Record<OrderStatus, number>;
+  const order = await getOrderWithRelations(Number(orderNumber));
+  const steps = order.step_execution || [];
+  const parts = order.order_parts || [];
 
-  const workflowMap = workflow[order.product_type];
+  const stepStats = steps
+    .filter(step => step.status === "done" && step.started_at && step.finished_at)
+    .map(step => {
+      const start = (step.started_at as Date).getTime();
+      const finish = (step.finished_at as Date).getTime();
+      const durationMinutes = (finish - start) / (1000 * 60);
+      const doneQuantity = step.done_quantity ?? 0;
+      const average = durationMinutes > 0 ? doneQuantity / durationMinutes : 0;
+      const matchingPart = parts.find(p => p.id === step.order_part_id);
+      const variantName = matchingPart ? matchingPart.variant : "-";
 
-  const steps = Object.keys(workflowMap) as OrderStatus[];
-
-  const speeds = steps
-    .map(step =>
-      getStepSpeed(
-        order.step_logs,
-        step,
-        quantities[step]
-      )
-    )
-    .filter((s): s is NonNullable<typeof s> => s !== null);
-
-  return res.json({
-    orderNumber: orderNumber,
-    speeds
-  });
-};*/
+      return {
+        id: step.id,
+        orderPartId: step.order_part_id,
+        stepType: step.step_type,
+        doneQuantity: step.done_quantity,
+        durationMinutes: Number(durationMinutes.toFixed(2)),
+        average: Number(average.toFixed(2)),
+        variant: variantName
+      };
+    });
+  return res.json(stepStats);
+};
 
 export const getOrderStatsController = async (req: Request, res: Response) => {
   const stats = await getOrderStatsService(Number(req.params.orderNumber));
