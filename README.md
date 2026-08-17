@@ -51,6 +51,7 @@ The system's core principle is an execution-driven architecture where the curren
 -   Order filtering, detailed views, and search functionality.
 -   A simple frontend UI for creating orders and tracking their progress live.
 -   Comprehensive integration test suite using Jest and Supertest.
+-   Real-time production analytics.
 
 ## Core Design
 
