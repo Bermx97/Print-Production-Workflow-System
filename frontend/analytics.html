@@ -154,10 +154,20 @@
       text-align: center;
       padding: 20px;
     }
+
+    .top-left-logo {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 110px;
+      height: auto;
+      z-index: 1000;
+    }
   </style>
 </head>
 
 <body>
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTA9bY76TH7jnJ41qwRYSfYenBBUwd0Rvz8fwWvCuTE5A&s=10" class="top-left-logo" alt="Logo">
 
   <div class="container">
     <h1 id="pageTitle">Order Analytics</h1>
@@ -170,7 +180,6 @@
     </div>
 
     <div class="analytics-card">
-      <div class="analytics-title">Execution Speed & Performance</div>
       <div id="statsContent">
         <div class="muted">Loading analytics...</div>
       </div>
