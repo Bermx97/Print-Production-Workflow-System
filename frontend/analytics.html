@@ -303,8 +303,9 @@
         return `
           <tr>
             <td><strong>${escapeHtml(item.stepType)}</strong></td>
+            <td>${escapeHtml(item.signatures)}</td>
             <td>${targetDisplay}</td>
-            <td>${escapeHtml(item.doneQuantity ?? 0)} pcs</td>
+            <td>${escapeHtml(item.signatures)} * ${escapeHtml(item.doneQuantity ?? 0)} pcs</td>
             <td>${escapeHtml(item.durationMinutes)} min</td>
             <td><strong style="color: #ffcc00;">${escapeHtml(item.average)} pcs/min</strong></td>
           </tr>
@@ -316,6 +317,7 @@
           <thead>
             <tr>
               <th>Step Type</th>
+              <th>Runs</th>
               <th>Variant</th>
               <th>Done Quantity</th>
               <th>Duration</th>

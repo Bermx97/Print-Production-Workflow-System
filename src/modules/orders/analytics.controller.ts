@@ -7,6 +7,7 @@ export const getAverageStepsSpeed = async (req: Request, res: Response) => {
   const order = await getOrderWithRelations(Number(orderNumber));
   const steps = order.step_execution || [];
   const parts = order.order_parts || [];
+  
 
   const stepStats = steps
     .filter(step => step.status === "done" && step.started_at && step.finished_at)
@@ -15,9 +16,10 @@ export const getAverageStepsSpeed = async (req: Request, res: Response) => {
       const finish = (step.finished_at as Date).getTime();
       const durationMinutes = (finish - start) / (1000 * 60);
       const doneQuantity = step.done_quantity ?? 0;
-      const average = durationMinutes > 0 ? doneQuantity / durationMinutes : 0;
       const matchingPart = parts.find(p => p.id === step.order_part_id);
+      const runs = matchingPart?.runs ?? 1
       const variantName = matchingPart ? matchingPart.variant : "-";
+      const average = (durationMinutes > 0 ? doneQuantity / durationMinutes : 0) * runs;
 
       return {
         id: step.id,
@@ -26,7 +28,8 @@ export const getAverageStepsSpeed = async (req: Request, res: Response) => {
         doneQuantity: step.done_quantity,
         durationMinutes: Number(durationMinutes.toFixed(2)),
         average: Number(average.toFixed(2)),
-        variant: variantName
+        variant: variantName,
+        signatures: runs
       };
     });
   return res.json(stepStats);
