@@ -42,7 +42,7 @@ The system's core principle is an execution-driven architecture where the curren
 
 ## Features
 
--   User registration and authentication (JWT-based).
+-   Admin-managed employee registration and JWT-based authentication.
 -   Role-Based Access Control (RBAC) specific to each workflow step.
 -   Creation and management of multi-part production orders.
 -   A stateful workflow engine that tracks step transitions (START, END, PAUSE, RESUME).
@@ -226,7 +226,7 @@ npm test
 
 ### Authentication (`/auth`)
 
--   `POST /auth/register`: Register a new employee.
+-   `POST /auth/register`: Register a new employee (admin only).
 -   `POST /auth/login`: Log in to receive a JWT token.
 
 ### Orders (`/orders`)
