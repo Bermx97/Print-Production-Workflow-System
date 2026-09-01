@@ -93,6 +93,14 @@
 </div>
 
 <script>
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -122,16 +130,16 @@
         const li = document.createElement("li");
 
         li.innerHTML = `
-          <div><span class="label">Order:</span> ${order.order_number}</div>
-          <div><span class="label">Product:</span> ${order.product_type}</div>
-          <div><span class="label">Customer:</span> ${order.customer ?? "none"}</div>
-          <div><span class="label">Quantity:</span> ${order.quantity ?? "none"}</div>
-          <div><span class="label">Pages:</span> ${order.number_of_pages ?? "none"}</div>
-          <div><span class="label">Due:</span> ${new Date(order.due_date).toLocaleDateString()}</div>
+          <div><span class="label">Order:</span> ${escapeHtml(order.order_number)}</div>
+          <div><span class="label">Product:</span> ${escapeHtml(order.product_type)}</div>
+          <div><span class="label">Customer:</span> ${escapeHtml(order.customer ?? "none")}</div>
+          <div><span class="label">Quantity:</span> ${escapeHtml(order.quantity ?? "none")}</div>
+          <div><span class="label">Pages:</span> ${escapeHtml(order.number_of_pages ?? "none")}</div>
+          <div><span class="label">Due:</span> ${escapeHtml(new Date(order.due_date).toLocaleDateString())}</div>
         `;
 
         li.addEventListener("click", () => {
-          window.location.href = `/order-panel.html?orderNumber=${order.order_number}`;
+          window.location.href = `/order-panel.html?orderNumber=${encodeURIComponent(order.order_number)}`;
         });
 
         ordersList.appendChild(li);
