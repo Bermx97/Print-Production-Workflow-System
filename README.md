@@ -38,7 +38,7 @@ To explore the application from the perspective of different system roles, you c
 
 This repository contains the backend REST API for a Print Production Workflow System. It is designed to manage manufacturing and print production orders by modeling the process as a stateful, event-driven workflow engine. Orders transition through predefined steps governed by strict dependencies and role-based execution rules.
 
-The system's core principle is an execution-driven architecture where the current state is derived entirely from the history of events. There is no global, mutable order state; instead, every action is recorded as an immutable event, providing a complete audit trail.
+The system uses an event-driven workflow that records every transition in an append-only audit log while storing the current state of each step in `step_execution` for efficient querying. There is no single global order status; each workflow step is tracked independently.
 
 ## Features
 
@@ -46,7 +46,7 @@ The system's core principle is an execution-driven architecture where the curren
 -   Role-Based Access Control (RBAC) specific to each workflow step.
 -   Creation and management of multi-part production orders.
 -   A stateful workflow engine that tracks step transitions (START, END, PAUSE, RESUME).
--   Event-sourced step tracking (`step_logs`) for a complete audit trail.
+-   Append-only event logging (`step_logs`) providing a complete audit trail.
 -   Step-dependency validation ensuring correct production sequence.
 -   Order filtering, detailed views, and search functionality.
 -   A simple frontend UI for creating orders and tracking their progress live.
@@ -57,13 +57,13 @@ The system's core principle is an execution-driven architecture where the curren
 
 ### Execution-Driven Architecture
 
-The system avoids storing a mutable "order status." Instead, the state is derived from two primary sources:
--   `step_execution`: Represents the current status of a step (active, paused, done).
--   `step_logs`: An immutable history of all events (START, PAUSE, END), serving as an audit trail.
+The system does not store a single mutable status for an entire order. Instead, it tracks every workflow step independently:
+-   `step_execution`: Stores the current status of each step (`active`, `paused`, `done`).
+-   `step_logs`: Stores an append-only history of all transitions (`START`, `PAUSE`, `RESUME`, `END`) for auditing.
 
 ### Step Dependencies
 
-Each product type has a unique workflow defined as a dependency graph. A step can only begin after its prerequisite steps are completed.
+Each product type has a unique workflow defined as a dependency graph. A step can begin once its prerequisite steps are active, paused, or completed, allowing production stages to overlap. However, a step can only be completed after all of its dependencies are finished.
 
 ```typescript
 // Example: src/modules/orders/orders.workflow.ts
@@ -109,7 +109,7 @@ Access to execute each workflow step is restricted by user role.
 
 A user can start a step only if:
 1.  Their role is authorized for that step.
-2.  All dependency steps are satisfied according to the workflow graph.
+2.  All dependency steps have been started, paused, or completed according to the workflow graph.
 3.  The step is not already active or completed for the given scope.
 4.  The scope rules (`per_part`, `aggregated`, `per_order`) are met.
 
@@ -125,7 +125,7 @@ A user can start a step only if:
 
 ## Database Schema
 
-The schema is designed around the core concepts of orders, employees, and the event-sourcing tables `step_logs` and `step_execution`.
+The schema is designed around orders, employees, append-only workflow logs, and the current execution state of individual production steps.
 
 <img width="1557" height="850" alt="DB" src="https://github.com/user-attachments/assets/829e38ba-3471-48df-bb96-75c1c527484f" />
 
@@ -146,7 +146,7 @@ The system uses the following enumerations to maintain data integrity across the
 | :--- | :--- |
 | **Step Name** | `printing`, `folding`, `sewing`, `case_making`, `folding_with_milling`, `hardcover_binding`, `binding`, `stitching` |
 | **Step Event** | `START`, `END`, `PAUSE`, `RESUME` |
-| **Execution Status**| `active`, `done`, `cancelled` |
+| **Execution Status** | `active`, `paused`, `done`, `cancelled` |
 
 #### Configuration & Variants
 | Enum | Values |
