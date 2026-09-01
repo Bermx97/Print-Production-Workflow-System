@@ -23,7 +23,7 @@ To explore the application from the perspective of different system roles, you c
 
 | Employee Role | Login | Password |
 | :--- | :--- | :--- |
-| **Admin** | `adminn` | `adminn` |
+| **Technologist (Can create order)** | `techno` | `techno`|
 | **Worker (Printer)** | `printer` | `printer` |
 | **Worker (Folding)** | `folding` | `folding` |
 | **Worker (Sewing)** | `sewing` | `sewing` |
@@ -104,7 +104,6 @@ Access to execute each workflow step is restricted by user role.
 -   **`hardcover_binder_operator`**: `hardcover_binding`
 -   **`perfect_bound_operator`**: `binding`
 -   **`stitching_operator`**: `stitching`
--   **`admin`**, **`seller`**, **`technologist`**: Full access to all workflow steps.
 
 ### Execution Rules
 
