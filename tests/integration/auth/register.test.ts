@@ -12,6 +12,34 @@ beforeEach(async () => {
 });
 
 describe('POST auth/register', () => {
+  
+  it('should return 401 if the user is not authenticated', async () => {
+  const response = await request(app)
+    .post('/auth/register')
+    .send({
+      login: 'newEmployee',
+      password: 'password123',
+      role: 'printer_operator'
+    });
+
+  expect(response.status).toBe(401);
+});
+
+  it('should return 403 if the user is not an admin', async () => {
+    const { token } = await getAuthToken('printer_operator');
+
+    const response = await request(app)
+      .post('/auth/register')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        login: 'newEmployee',
+        password: 'password123',
+        role: 'printer_operator'
+      });
+
+    expect(response.status).toBe(403);
+  });
+
   it('should return 400 if the login is empty', async () => {
     const { token } = await getAuthToken();
     const response = await request(app)
@@ -58,8 +86,8 @@ describe('POST auth/register', () => {
     });
 
   it('should return 409 if the login already exists', async () => {
-    const { token } = await getAuthToken();
-    const { user: {login} } = await getAuthToken();
+    const { token, user: {login} } = await getAuthToken();
+    //const { user: {login} } = await getAuthToken();
     const response = await request(app)
     .post('/auth/register')
     .set("Authorization", `Bearer ${token}`)
