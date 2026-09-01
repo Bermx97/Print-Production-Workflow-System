@@ -13,8 +13,10 @@ beforeEach(async () => {
 
 describe('POST auth/register', () => {
   it('should return 400 if the login is empty', async () => {
+    const { token } = await getAuthToken();
     const response = await request(app)
       .post('/auth/register')
+      .set("Authorization", `Bearer ${token}`)
       .send({
         login:'',
         password:'admin123',
@@ -26,8 +28,10 @@ describe('POST auth/register', () => {
   });
 
   it('should return 400 if the password is empty', async () => {
+    const { token } = await getAuthToken();
     const response = await request(app)
       .post('/auth/register')
+      .set("Authorization", `Bearer ${token}`)
       .send({
         login:'Admin1',
         password:'',
@@ -39,8 +43,10 @@ describe('POST auth/register', () => {
     });
 
   it('should return 400 if the role is empty', async () => {
+    const { token } = await getAuthToken();
     const response = await request(app)
       .post('/auth/register')
+      .set("Authorization", `Bearer ${token}`)
       .send({
         login:'Admin1',
         password:'Adminpass',
@@ -52,9 +58,11 @@ describe('POST auth/register', () => {
     });
 
   it('should return 409 if the login already exists', async () => {
+    const { token } = await getAuthToken();
     const { user: {login} } = await getAuthToken();
     const response = await request(app)
     .post('/auth/register')
+    .set("Authorization", `Bearer ${token}`)
     .send({
       login: login,
       password: 'Test 409',
@@ -66,8 +74,10 @@ describe('POST auth/register', () => {
   });
 
   it('should return 201 if the employee was successfully added', async () => {
+    const { token } = await getAuthToken();
     const response = await request(app)
       .post('/auth/register')
+      .set("Authorization", `Bearer ${token}`)
       .send({
         login: 'Test201',
         password: 'Test 201',

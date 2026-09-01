@@ -2,6 +2,8 @@ import { expect, test, describe, it, beforeEach } from "@jest/globals";
 import request from "supertest";
 import app from "../../../src/app";
 import prisma from "../../../src/lib/prisma";
+import { getAuthToken } from "../../utils/auth";
+
 
 
 beforeEach(async () => {
@@ -12,6 +14,7 @@ beforeEach(async () => {
 
 
 it('should register and login employee', async () => {
+  const { token } = await getAuthToken();
     const employee = {
         login: 'flowTest',
         password: 'flowTest',
@@ -20,6 +23,7 @@ it('should register and login employee', async () => {
 
     const register = await request(app)
     .post('/auth/register')
+    .set("Authorization", `Bearer ${token}`)
     .send(employee);
 
     expect(register.status).toBe(201);

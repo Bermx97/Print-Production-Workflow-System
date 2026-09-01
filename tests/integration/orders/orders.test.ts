@@ -278,7 +278,6 @@ describe('POST /orders', () => {
     parts
   })
   .set("Authorization", `Bearer ${token}`);
-  console.log(response)
 
   expect(response.status).toBe(201);
 

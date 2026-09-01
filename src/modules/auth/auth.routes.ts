@@ -3,6 +3,8 @@ import { login, registerEmployee } from './auth.controller'
 import { body } from 'express-validator';
 import validateRequest from '../../middlewares/validateRequest';
 import { employee_role } from '@prisma/client';
+import { isAuthenticated } from '../../middlewares/isAuthenticated';
+import { authorizeRoles } from '../../middlewares/authorizeRole';
 
 
 const router = express.Router();
@@ -21,7 +23,7 @@ router.post('/login',
     .withMessage('Password must be at least 6 characters long'),
     validateRequest, login);
 
-router.post('/register',
+router.post('/register', isAuthenticated, authorizeRoles('admin'),
     
     body('login')
     .notEmpty()

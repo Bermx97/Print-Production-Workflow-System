@@ -1,6 +1,9 @@
 import request from 'supertest';
-import  app from '../../src/app';
+import app from '../../src/app';
 import { employee_role } from '@prisma/client';
+import bcrypt from 'bcrypt';
+import prisma from '../../src/lib/prisma';
+
 
 type AuthResponse = {
   token: string;
@@ -13,6 +16,7 @@ type AuthResponse = {
 
 export const getAuthToken = async (role: employee_role = 'admin') => {
   const uniqueLogin = `user_${Date.now()}`;
+  const hashedPassword = await bcrypt.hash('test123', 10);
 
   const user = {
     login: uniqueLogin,
@@ -20,7 +24,13 @@ export const getAuthToken = async (role: employee_role = 'admin') => {
     role: role
   };
 
-  await request(app).post('/auth/register').send(user);
+  await prisma.employee.create({
+    data: {
+      login: uniqueLogin,
+      hashed_password: hashedPassword,
+      role
+    }
+  });
 
   const res = await request(app).post('/auth/login').send({
     login: user.login,
