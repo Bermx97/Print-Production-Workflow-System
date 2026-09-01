@@ -12,18 +12,18 @@ beforeEach(async () => {
 });
 
 describe('POST auth/register', () => {
-  
-  it('should return 401 if the user is not authenticated', async () => {
-  const response = await request(app)
-    .post('/auth/register')
-    .send({
-      login: 'newEmployee',
-      password: 'password123',
-      role: 'printer_operator'
-    });
 
-  expect(response.status).toBe(401);
-});
+  it('should return 401 if the user is not authenticated', async () => {
+    const response = await request(app)
+      .post('/auth/register')
+      .send({
+        login: 'newEmployee',
+        password: 'password123',
+        role: 'printer_operator'
+      });
+
+    expect(response.status).toBe(401);
+  });
 
   it('should return 403 if the user is not an admin', async () => {
     const { token } = await getAuthToken('printer_operator');
@@ -46,8 +46,8 @@ describe('POST auth/register', () => {
       .post('/auth/register')
       .set("Authorization", `Bearer ${token}`)
       .send({
-        login:'',
-        password:'admin123',
+        login: '',
+        password: 'admin123',
         role: 'admin'
       });
 
@@ -61,14 +61,14 @@ describe('POST auth/register', () => {
       .post('/auth/register')
       .set("Authorization", `Bearer ${token}`)
       .send({
-        login:'Admin1',
-        password:'',
+        login: 'Admin1',
+        password: '',
         role: 'admin'
       });
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Password is required');
-    });
+  });
 
   it('should return 400 if the role is empty', async () => {
     const { token } = await getAuthToken();
@@ -76,29 +76,28 @@ describe('POST auth/register', () => {
       .post('/auth/register')
       .set("Authorization", `Bearer ${token}`)
       .send({
-        login:'Admin1',
-        password:'Adminpass',
+        login: 'Admin1',
+        password: 'Adminpass',
         role: ''
       });
-        
+
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Role is required');
-    });
+  });
 
   it('should return 409 if the login already exists', async () => {
-    const { token, user: {login} } = await getAuthToken();
-    //const { user: {login} } = await getAuthToken();
+    const { token, user: { login } } = await getAuthToken();
     const response = await request(app)
-    .post('/auth/register')
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      login: login,
-      password: 'Test 409',
-      role: 'admin'
-    });
+      .post('/auth/register')
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        login: login,
+        password: 'Test 409',
+        role: 'admin'
+      });
 
-  expect(response.status).toBe(409);
-  expect(response.body.message).toBe('Employee already exist');
+    expect(response.status).toBe(409);
+    expect(response.body.message).toBe('Employee already exist');
   });
 
   it('should return 201 if the employee was successfully added', async () => {
@@ -113,7 +112,7 @@ describe('POST auth/register', () => {
       });
     expect(response.status).toBe(201);
     expect(response.body.message).toBe(`User Test201 with role admin created`);
-    });
+  });
 });
 
 
