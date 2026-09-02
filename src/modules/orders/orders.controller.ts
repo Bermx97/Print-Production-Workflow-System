@@ -6,7 +6,6 @@ import { BLOCK_START_STATUSES, getScope, getWorkflowMap, IN_PROGRESS_STATUSES } 
 import { createOrderService, createStepEventV2, getAllOrdersService, getOrderPartsService, getOrderService, getVisibleOrdersForRole, getMyActiveStepsService } from './orders.service';
 import { getPartsForStep, getWorkflow as getWorkflowSequence, roleStatusMap } from './orders.workflow';
 import { getRoleSteps } from './workflow/access/role.access';
-import { getLatestExecution } from './workflow/queries/execution.queries';
 import { canStartStepForPart } from './workflow/rules/dependency.rules';
 import { getOrderState } from './workflow/state/orderState.service';
 
