@@ -40,6 +40,19 @@ This repository contains the backend REST API for a Print Production Workflow Sy
 
 The system uses an event-driven workflow that records every transition in an append-only audit log while storing the current state of each step in `step_execution` for efficient querying. There is no single global order status; each workflow step is tracked independently.
 
+## Why I Built This
+
+I designed this project based on my 10 years of professional experience in print production. It models real production dependencies, parallel processing, operator responsibilities, multi-part orders, and the complete history of work performed on each production step.
+
+## Engineering Highlights
+
+- Atomic order creation using Prisma transactions.
+- Row-level locking to prevent concurrent duplicate step starts.
+- Append-only audit history combined with materialized execution state.
+- Dependency-based workflow execution with overlapping production stages.
+- Role-based access control for individual production operations.
+- Integration tests covering workflow transitions, rollback, and concurrency.
+
 ## Features
 
 -   Admin-managed employee registration and JWT-based authentication.
@@ -217,9 +230,19 @@ The project includes a powerful, workflow-aware seed generator that creates real
 
 ### Running Tests
 
-Execute the integration test suite:
+> ⚠️ **Important:** Integration tests truncate database tables. Always use a separate test database configured in `.env.test`. Never run the test suite against a development or production database.
+
+Copy the example configuration:
+
+```bash
+cp .env.test.example .env.test
+```
+
+Update `DATABASE_URL` in `.env.test`, then run:
+
 ```bash
 npm test
+```test
 ```
 
 ## API Endpoints
