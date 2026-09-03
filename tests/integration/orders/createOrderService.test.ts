@@ -30,13 +30,14 @@ describe('createOrderService', () => {
 
     const invalidParts = [
       {
-        variant: 'INVALID_VARIANT' as any,
+        variant: 'INVALID_VARIANT',
         runs: 1,
         part_quantity: 1000
       }
     ];
 
     await expect(
+      // @ts-expect-error intentionally invalid variant for validation test
       createOrderService(data, invalidParts)
     ).rejects.toThrow();
 

@@ -1,46 +1,13 @@
-import { OrderStatusV2 } from '../../../types/orderStatus';
-import { assertRoleCanAccessStep } from '../domain/roleGuard';
+import { OrderStatusV2, WorkflowMap } from '../../../types/orderStatus';
 import { HttpError } from '../../../utils/errors';
 import { getPartsForStep, stepScope } from '../orders.workflow';
-import { employee_role } from '@prisma/client';
-import type { Prisma } from '@prisma/client';
-import { product_type } from '@prisma/client';
-import { OrderStatus } from '../../../types/orderStatus';
-import type { order as Order } from '@prisma/client';
-import { WorkflowMap } from '../../../types/orderStatus';
-
-
+import { Prisma, employee_role, order as Order } from '@prisma/client';
+import { getStepFromRole } from '../domain/workflowContext';
 
 
 type WorkflowStep = keyof typeof stepScope;
 
 const DONE_STATUS = 'done';
-
-const getStepFromRole = (
-  wf: Record<product_type, OrderStatus>,
-  role: employee_role
-): OrderStatusV2 => {
-  const allSteps = Object.keys(wf) as OrderStatusV2[];
-
-  const roleSteps = allSteps.filter((step) => {
-    try {
-      assertRoleCanAccessStep(role, step);
-      return true;
-    } catch {
-      return false;
-    }
-  });
-
-  if (roleSteps.length === 0) {
-    throw new HttpError('Role not allowed for any step in this workflow', 403);
-  }
-
-  if (roleSteps.length > 1) {
-    throw new HttpError('Step required for this role', 400);
-  }
-
-  return roleSteps[0];
-};
 
 const assertDependenciesDone = async (ctx: {
   tx: Prisma.TransactionClient;
@@ -142,7 +109,7 @@ export const handleEnd = async (ctx: {
   order: Order;
   userId: string;
   role: employee_role;
-  wf: Record<string, any>;
+  wf: WorkflowMap;
   doneQuantity: number;
   orderPartId: string;
 }) => {

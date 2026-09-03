@@ -1,4 +1,4 @@
-import { employee_role, Prisma } from '@prisma/client';
+import { employee_role, Prisma, step_execution } from '@prisma/client';
 import prisma from '../../lib/prisma';
 import { EventType, OrderStatusV2 } from "../../types/orderStatus";
 import { HttpError } from '../../utils/errors';
@@ -7,7 +7,7 @@ import { handleEnd } from './handlers/handleEnd';
 import { handlePause } from './handlers/handlePause';
 import { handleResume } from './handlers/handleResume';
 import { handleStart } from './handlers/handleStart';
-import { getPartsForStep, roleStatusMap, workflow } from './orders.workflow';
+import { getPartsForStep, RoleAccess, roleStatusMap, workflow } from './orders.workflow';
 import { findCurrentExecution } from './workflow/queries/execution.queries';
 import { validateStepCanStart } from './workflow/rules/dependency.rules';
 import { getRoleSteps } from './workflow/access/role.access';
@@ -183,7 +183,7 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
   });
 };
 
-export const getVisibleOrdersForRole = async (role: employee_role, access: any) => {
+export const getVisibleOrdersForRole = async (role: employee_role, access: RoleAccess) => {
   const orders = await prisma.order.findMany({
     include: { order_parts: true },
     orderBy: { order_number: 'asc' }
@@ -195,7 +195,7 @@ export const getVisibleOrdersForRole = async (role: employee_role, access: any) 
     orderBy: { started_at: 'desc' }
   });
 
-  const executionsByOrder = new Map<string, any[]>();
+  const executionsByOrder = new Map<string, step_execution[]>();
   for (const ex of allExecutions) {
     if (!executionsByOrder.has(ex.order_id)) {
       executionsByOrder.set(ex.order_id, []);
@@ -216,7 +216,7 @@ export const getVisibleOrdersForRole = async (role: employee_role, access: any) 
   const partExecutions = new Set<string>();
 
   for (const ex of allExecutions) {
-    if (IN_PROGRESS_STATUSES.includes(ex.status as any)) {
+    if (IN_PROGRESS_STATUSES.includes(ex.status)) {
       genericExecutions.add(`${ex.order_id}_${ex.step_type}`);
       if (ex.order_part_id) {
         partExecutions.add(`${ex.order_id}_${ex.step_type}_${ex.order_part_id}`);

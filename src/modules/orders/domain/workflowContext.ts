@@ -6,11 +6,12 @@ import { assertRoleCanAccessStep } from './roleGuard';
 import { stepScope } from '../orders.workflow';
 import type { order as Order } from '@prisma/client';
 import { product_type } from '@prisma/client';
+import { execution_status } from '@prisma/client';
 
 
 
 export const READY_STATUSES = ['active', 'paused', 'done'] as const;
-export const IN_PROGRESS_STATUSES = ['active', 'paused'] as const;
+export const IN_PROGRESS_STATUSES: readonly execution_status[] = ['active', 'paused'];
 export const BLOCK_START_STATUSES = ['active', 'paused', 'done'] as const;
 
 
@@ -29,10 +30,10 @@ export const getWorkflow = (order: Order) => {
 
 export const getWorkflowMap = (productType: product_type): WorkflowMap | undefined => {
   return workflow[productType as WorkflowProductType];
-}; 
+};
 
 export const getStepFromRole = (
-  wf: ReturnType<typeof getWorkflow>,
+  wf: WorkflowMap,
   role: employee_role
 ): OrderStatusV2 => {
   const allSteps = Object.keys(wf) as OrderStatusV2[];

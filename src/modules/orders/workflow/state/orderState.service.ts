@@ -4,8 +4,9 @@ import { BLOCK_START_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
 import { getPartsForStep } from "../../orders.workflow";
 import { OrderWithParts } from "../../../../types/order.types";
+import { step_execution } from "@prisma/client";
 
-export const getOrderState = async (order: OrderWithParts, wf: WorkflowMap, executionsForOrder?: any[]) => {
+export const getOrderState = async (order: OrderWithParts, wf: WorkflowMap, executionsForOrder?: step_execution[]) => {
   const state: Record<string, string> = {};
 
   const executions = executionsForOrder || await prisma.step_execution.findMany({
@@ -19,22 +20,22 @@ export const getOrderState = async (order: OrderWithParts, wf: WorkflowMap, exec
     if (scope === 'per_part') {
       const partIds = getPartsForStep(order.order_parts, step).map((part) => part.id);
 
-      const stepExecutions = executions.filter((ex: any) => 
+      const stepExecutions = executions.filter((ex) => 
         ex.step_type === step &&
         ex.order_part_id && 
         partIds.includes(ex.order_part_id) &&
-        BLOCK_START_STATUSES.includes(ex.status as any)
+        BLOCK_START_STATUSES.includes(ex.status)
       );
 
-      if (stepExecutions.some((execution: any) => execution.status === 'active')) {
+      if (stepExecutions.some((execution) => execution.status === 'active')) {
         state[step] = 'ACTIVE';
-      } else if (stepExecutions.some((execution: any) => execution.status === 'paused')) {
+      } else if (stepExecutions.some((execution) => execution.status === 'paused')) {
         state[step] = 'PAUSED';
       } else if (
         partIds.length > 0 &&
         partIds.every((partId: string) =>
           stepExecutions.some(
-            (execution: any) =>
+            (execution) =>
               execution.order_part_id === partId &&
               execution.status === 'done'
           )
@@ -48,9 +49,9 @@ export const getOrderState = async (order: OrderWithParts, wf: WorkflowMap, exec
       continue;
     }
 
-    const execution = executions.find((ex: any) => 
+    const execution = executions.find((ex) => 
       ex.step_type === step &&
-      BLOCK_START_STATUSES.includes(ex.status as any)
+      BLOCK_START_STATUSES.includes(ex.status)
     );
 
     if (execution?.status === 'active') {

@@ -9,7 +9,7 @@ import { assertRoleCanAccessStep } from "../../domain/roleGuard";
 import { getOrderParts } from "../queries/orderParts.queries";
 import { getPartsForStep, isPartApplicableToStep, stepScope } from "../../orders.workflow";
 import type { Prisma } from '@prisma/client';
-import type { order as Order } from '@prisma/client';
+import type { order as Order, step_execution } from '@prisma/client';
 import { OrderWithParts } from "../../../../types/order.types";
 
 
@@ -205,7 +205,7 @@ export const validateStepCanStart = async (ctx: {
 
 export const allPartsReadyInDependency = async (
   ctx: { order: OrderWithParts; dependencyStep: step_name; },
-  executionsForOrder?: any[]
+  executionsForOrder?: step_execution[]
 ) => {
   const { order, dependencyStep } = ctx;
   const dependencyScope = getScope(dependencyStep);
@@ -236,7 +236,7 @@ export const allPartsReadyInDependency = async (
 
 export const canStartStepForPart = async (
   ctx: { order: OrderWithParts; wf: WorkflowMap; step: step_name; orderPartId?: string | null; },
-  executionsForOrder?: any[]
+  executionsForOrder?: step_execution[]
 ) => {
   const { order, wf, step, orderPartId } = ctx;
   const scope = getScope(step);

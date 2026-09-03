@@ -1,7 +1,8 @@
 import { OrderStatus } from '../../types/orderStatus';
 import { getOrderWithRelations } from './orders.service';
+import { step_logs } from '@prisma/client';
 
-export function getStepSpeed(logs: any[], step: OrderStatus, quantity: number) {
+export function getStepSpeed(logs: step_logs[], step: OrderStatus, quantity: number) {
   if (!Number.isFinite(quantity) || quantity <= 0) {
     return null;
   }

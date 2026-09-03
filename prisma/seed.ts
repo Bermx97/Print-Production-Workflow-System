@@ -4,6 +4,11 @@ import 'dotenv/config';
 import { randomUUID } from 'node:crypto';
 import { COVER_VARIANT, getPartsForStep, getWorkflow, stepScope, workflow, } from '../src/modules/orders/orders.workflow';
 import { OrderStatus } from '../src/types/orderStatus';
+import { Prisma } from '@prisma/client';
+
+type SeedStepLog = Prisma.step_logsCreateManyInput & {
+  created_at: Date;
+};
 
 
 const prisma = new PrismaClient();
@@ -433,8 +438,8 @@ async function seedOrder(ctx: {
   const orderParts = buildOrderParts(orderId, orderQuantity);
   const orderPartById = new Map(orderParts.map((part) => [part.id, part]));
   const stepStates = new Map<string, StepInstanceState>();
-  const stepExecutions: any[] = [];
-  const stepLogs: any[] = [];
+  const stepExecutions: Prisma.step_executionCreateManyInput[] = [];
+  const stepLogs: SeedStepLog[] = [];
   const stepQuantities: Partial<Record<OrderStatus, number>> = {};
   const orderBaseStartMs = Date.now() - randInt(2, 21) * DAY_MS;
   const progressTarget = randFloat(0.15, 1.15);
@@ -675,7 +680,6 @@ async function seedOrder(ctx: {
         quantity: orderQuantity,
         customer: pick(CLIENTS),
         number_of_pages: randomEvenPages(),
-        //step_quantities: stepQuantities,
       },
     });
 

@@ -6,7 +6,8 @@ import { step_name } from "@prisma/client";
 import { BLOCK_START_STATUSES, READY_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
 import type { Prisma } from '@prisma/client';
-import type { order as Order } from '@prisma/client';
+import type { order as Order, step_execution } from '@prisma/client';
+
 
 
 
@@ -41,31 +42,31 @@ export const findCurrentExecution = async (ctx: {
 
 export const isStepStartedOrDone = async (
   ctx: { orderId: string; step: step_name; orderPartId?: string | null; },
-  executionsForOrder?: any[]
+  executionsForOrder?: step_execution[]
 ) => {
   const execution = await getLatestExecution(ctx, executionsForOrder);
 
   return Boolean(
     execution &&
-    READY_STATUSES.includes(execution.status as any)
+    READY_STATUSES.includes(execution.status)
   );
 };
 
 export const hasStartedOrFinishedExecution = async (
   ctx: { orderId: string; step: step_name; orderPartId?: string | null; },
-  executionsForOrder?: any[]
+  executionsForOrder?: step_execution[]
 ) => {
   const execution = await getLatestExecution(ctx, executionsForOrder);
 
   return Boolean(
     execution &&
-    BLOCK_START_STATUSES.includes(execution.status as any)
+    BLOCK_START_STATUSES.includes(execution.status)
   );
 };
 
 export const getLatestExecution = async (
   ctx: { orderId: string; step: step_name; orderPartId?: string | null; },
-  executionsForOrder?: any[]
+  executionsForOrder?: step_execution[]
 ) => {
   const { orderId, step, orderPartId } = ctx;
   const scope = getScope(step);

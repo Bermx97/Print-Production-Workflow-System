@@ -5,6 +5,7 @@ import { expect, test, describe, it, beforeEach, afterEach } from "@jest/globals
 import { createOrder } from '../../utils/order';
 import { getAuthToken } from '../../utils/auth';
 import { employee_role } from '@prisma/client';
+import { EventType } from '../../../src/types/orderStatus';
 
 describe('createStepEventV2', () => {
   let order: Awaited<ReturnType<typeof createOrder>>['order'];
@@ -170,7 +171,7 @@ describe('createStepEventV2', () => {
         order.order_number,
         printerId,
         printerRole,
-        'INVALID' as any,
+        'INVALID' as unknown as EventType,
         orderPartId
       )
     ).rejects.toThrow('Invalid event type');
