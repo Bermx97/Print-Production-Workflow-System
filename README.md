@@ -1,5 +1,5 @@
 # Print Production Workflow System
-
+![CI](https://github.com/Bermx97/Print-Production-Workflow-System/actions/workflows/ci.yml/badge.svg)
 ## Demo & Live Access
 
 <video src="https://github.com/user-attachments/assets/cf8a944f-d32c-46a6-89de-0d063b5dbc2d"
