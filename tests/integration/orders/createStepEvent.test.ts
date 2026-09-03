@@ -54,11 +54,11 @@ describe('createStepEventV2', () => {
 
   it('should create START log', async () => {
     await createStepEventV2(
-        order.order_number,
-        printerId,
-        printerRole,
-        'START',
-        orderPartId
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
     );
 
     const log = await prisma.step_logs.findFirst({
@@ -132,7 +132,7 @@ describe('createStepEventV2', () => {
   });
 
   it('should allow folding after printing started', async () => {
-    
+
     await createStepEventV2(
       order.order_number,
       printerId,
@@ -171,40 +171,40 @@ describe('createStepEventV2', () => {
         printerId,
         printerRole,
         'INVALID' as any,
-      orderPartId
+        orderPartId
       )
     ).rejects.toThrow('Invalid event type');
   });
 
   it('should not create duplicate executions', async () => {
-  await createStepEventV2(
-    order.order_number,
-    printerId,
-    printerRole,
-    'START',
-    orderPartId
-  );
-
-  await expect(
-    createStepEventV2(
+    await createStepEventV2(
       order.order_number,
       printerId,
       printerRole,
       'START',
       orderPartId
-    )
-  ).rejects.toThrow();
+    );
 
-  const executions = await prisma.step_execution.findMany({
-    where: {
-      order_id: order.id,
-      order_part_id: orderPartId,
-      step_type: 'printing'
-    }
+    await expect(
+      createStepEventV2(
+        order.order_number,
+        printerId,
+        printerRole,
+        'START',
+        orderPartId
+      )
+    ).rejects.toThrow();
+
+    const executions = await prisma.step_execution.findMany({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_type: 'printing'
+      }
+    });
+
+    expect(executions.length).toBe(1);
   });
-
-  expect(executions.length).toBe(1);
-});
 
   it('should pause active printing step', async () => {
     await createStepEventV2(
@@ -435,123 +435,123 @@ describe('createStepEventV2', () => {
     ).rejects.toThrow('No active execution found');
   });
 
-    it('should finish printing step', async () => {
+  it('should finish printing step', async () => {
     await createStepEventV2(
-        order.order_number,
-        printerId,
-        printerRole,
-        'START',
-        orderPartId
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
     );
 
     const result = await createStepEventV2(
-        order.order_number,
-        printerId,
-        printerRole,
-        'END',
-        orderPartId,
-        1000
+      order.order_number,
+      printerId,
+      printerRole,
+      'END',
+      orderPartId,
+      1000
     );
 
     expect(result).toBeDefined();
 
     const execution = await prisma.step_execution.findFirst({
-        where: {
+      where: {
         order_id: order.id,
         order_part_id: orderPartId,
         step_type: 'printing'
-        }
+      }
     });
 
     expect(execution?.status).toBe('done');
-    });
+  });
 
-    it('should not finish step before start', async () => {
+  it('should not finish step before start', async () => {
     await expect(
-        createStepEventV2(
+      createStepEventV2(
         order.order_number,
         printerId,
         printerRole,
         'END',
         orderPartId,
         100
-        )
+      )
     ).rejects.toThrow();
-    });
+  });
 
-    it('should reject unauthorized role', async () => {
+  it('should reject unauthorized role', async () => {
     const { user: sewing } = await getAuthToken('sewing_operator');
 
     await expect(
-        createStepEventV2(
+      createStepEventV2(
         order.order_number,
         sewing.id,
         sewing.role,
         'START',
         orderPartId
-        )
+      )
     ).rejects.toThrow();
+  });
+
+  it('should allow only one concurrent START for the same step', async () => {
+    const results = await Promise.allSettled([
+      createStepEventV2(
+        order.order_number,
+        printerId,
+        printerRole,
+        'START',
+        orderPartId
+      ),
+      createStepEventV2(
+        order.order_number,
+        printerId,
+        printerRole,
+        'START',
+        orderPartId
+      )
+    ]);
+
+    const fulfilledResults = results.filter(
+      result => result.status === 'fulfilled'
+    );
+
+    const rejectedResults = results.filter(
+      result => result.status === 'rejected'
+    );
+
+    expect(fulfilledResults).toHaveLength(1);
+    expect(rejectedResults).toHaveLength(1);
+
+    const rejectedResult = rejectedResults[0];
+
+    if (rejectedResult.status === 'rejected') {
+      expect(rejectedResult.reason).toBeInstanceOf(HttpError);
+      expect(rejectedResult.reason.status).toBe(409);
+      expect(rejectedResult.reason.message).toBe('Step already active');
+    }
+
+    const startLogs = await prisma.step_logs.findMany({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_name: 'printing',
+        event_type: 'START'
+      }
     });
 
-    it('should allow only one concurrent START for the same step', async () => {
-  const results = await Promise.allSettled([
-    createStepEventV2(
-      order.order_number,
-      printerId,
-      printerRole,
-      'START',
-      orderPartId
-    ),
-    createStepEventV2(
-      order.order_number,
-      printerId,
-      printerRole,
-      'START',
-      orderPartId
-    )
-  ]);
+    expect(startLogs).toHaveLength(1);
 
-  const fulfilledResults = results.filter(
-    result => result.status === 'fulfilled'
-  );
+    const executions = await prisma.step_execution.findMany({
+      where: {
+        order_id: order.id,
+        order_part_id: orderPartId,
+        step_type: 'printing'
+      }
+    });
 
-  const rejectedResults = results.filter(
-    result => result.status === 'rejected'
-  );
-
-  expect(fulfilledResults).toHaveLength(1);
-  expect(rejectedResults).toHaveLength(1);
-
-  const rejectedResult = rejectedResults[0];
-
-  if (rejectedResult.status === 'rejected') {
-    expect(rejectedResult.reason).toBeInstanceOf(HttpError);
-    expect(rejectedResult.reason.status).toBe(409);
-    expect(rejectedResult.reason.message).toBe('Step already active');
-  }
-
-  const startLogs = await prisma.step_logs.findMany({
-    where: {
-      order_id: order.id,
-      order_part_id: orderPartId,
-      step_name: 'printing',
-      event_type: 'START'
-    }
+    expect(executions).toHaveLength(1);
+    expect(executions[0].status).toBe('active');
   });
-
-  expect(startLogs).toHaveLength(1);
-
-  const executions = await prisma.step_execution.findMany({
-    where: {
-      order_id: order.id,
-      order_part_id: orderPartId,
-      step_type: 'printing'
-    }
-  });
-
-  expect(executions).toHaveLength(1);
-  expect(executions[0].status).toBe('active');
-});
 
 });
 

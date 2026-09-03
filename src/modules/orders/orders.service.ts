@@ -20,18 +20,18 @@ type CreateOrderData = Prisma.orderCreateInput;
 
 export const getMyActiveStepsService = async (userId: string) => {
   const activeExecutions = await prisma.step_execution.findMany({
-    where: { status: 'active'},
+    where: { status: 'active' },
     include: { order_part: true, order: true }
   });
   const activeOrderIds = activeExecutions.map(c => c.order_id);
   const employeeLogs = await prisma.step_logs.findMany({
     where: {
       employee: userId,
-      order_id: { in: activeOrderIds } 
+      order_id: { in: activeOrderIds }
     }
   });
   const myActiveExecutions = activeExecutions.filter(execution => {
-    return employeeLogs.some(log => 
+    return employeeLogs.some(log =>
       log.order_id === execution.order_id &&
       log.step_name === execution.step_type &&
       log.order_part_id === execution.order_part_id
@@ -94,7 +94,7 @@ export const getOrderWithRelations = async (orderNumber: number) => {
   if (!order) {
     throw new HttpError('Order not found', 404);
   };
-  
+
   return order;
 };
 
@@ -113,7 +113,7 @@ export const createOrderService = async (data: CreateOrderData, partsData: Omit<
 
 export const createStepEventV2 = async (orderNumber: number, userId: string, role: employee_role, eventType: EventType, orderPartId: string, doneQuantity?: number) => {
   return prisma.$transaction(async (tx) => {
-    
+
     const [lockedOrder] = await tx.$queryRaw<Array<{ id: string }>>`
     SELECT "id"
     FROM "order"
@@ -121,15 +121,15 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
     FOR UPDATE
   `;
 
-  if (!lockedOrder) {
-    throw new HttpError('Order not found', 404);
-  }
-
-  const order = await tx.order.findUnique({
-    where: {
-      id: lockedOrder.id
+    if (!lockedOrder) {
+      throw new HttpError('Order not found', 404);
     }
-  });
+
+    const order = await tx.order.findUnique({
+      where: {
+        id: lockedOrder.id
+      }
+    });
 
     if (!order) {
       throw new HttpError('Order not found', 404);
@@ -176,80 +176,80 @@ export const createStepEventV2 = async (orderNumber: number, userId: string, rol
 };
 
 export const getVisibleOrdersForRole = async (role: employee_role, access: any) => {
-    const orders = await prisma.order.findMany({ 
-      include: { order_parts: true },
-      orderBy: { order_number: 'asc' }
-    });
+  const orders = await prisma.order.findMany({
+    include: { order_parts: true },
+    orderBy: { order_number: 'asc' }
+  });
 
-    const orderIds = orders.map(o => o.id);
-    const allExecutions = await prisma.step_execution.findMany({
-      where: { order_id: { in: orderIds } },
-      orderBy: { started_at: 'desc' }
-    });
+  const orderIds = orders.map(o => o.id);
+  const allExecutions = await prisma.step_execution.findMany({
+    where: { order_id: { in: orderIds } },
+    orderBy: { started_at: 'desc' }
+  });
 
-    const executionsByOrder = new Map<string, any[]>();
-    for (const ex of allExecutions) {
-      if (!executionsByOrder.has(ex.order_id)) {
-        executionsByOrder.set(ex.order_id, []);
+  const executionsByOrder = new Map<string, any[]>();
+  for (const ex of allExecutions) {
+    if (!executionsByOrder.has(ex.order_id)) {
+      executionsByOrder.set(ex.order_id, []);
+    }
+    executionsByOrder.get(ex.order_id)!.push(ex);
+  }
+
+  if (access.type === 'ALL') {
+    return Promise.all(
+      orders.map(async (o) => ({
+        ...o,
+        state: await getOrderState(o, getWorkflowMap(o.product_type)!, executionsByOrder.get(o.id) || [])
+      }))
+    );
+  }
+
+  const genericExecutions = new Set<string>();
+  const partExecutions = new Set<string>();
+
+  for (const ex of allExecutions) {
+    if (IN_PROGRESS_STATUSES.includes(ex.status as any)) {
+      genericExecutions.add(`${ex.order_id}_${ex.step_type}`);
+      if (ex.order_part_id) {
+        partExecutions.add(`${ex.order_id}_${ex.step_type}_${ex.order_part_id}`);
       }
-      executionsByOrder.get(ex.order_id)!.push(ex);
     }
+  }
 
-    if (access.type === 'ALL') {
-      return Promise.all(
-        orders.map(async (o) => ({
-          ...o,
-          state: await getOrderState(o, getWorkflowMap(o.product_type)!, executionsByOrder.get(o.id) || [])
-        }))
-      );
-    }
+  const visibleOrders = [];
 
-    const genericExecutions = new Set<string>();
-    const partExecutions = new Set<string>();
+  for (const order of orders) {
+    const wf = getWorkflowMap(order.product_type);
+    if (!wf) continue;
 
-    for (const ex of allExecutions) {
-      if (IN_PROGRESS_STATUSES.includes(ex.status as any)) {
-        genericExecutions.add(`${ex.order_id}_${ex.step_type}`);
-        if (ex.order_part_id) {
-          partExecutions.add(`${ex.order_id}_${ex.step_type}_${ex.order_part_id}`);
+    const allowedSteps = getRoleSteps(role, wf);
+    let isVisible = false;
+    const orderExecutions = executionsByOrder.get(order.id) || [];
+
+    for (const step of allowedSteps) {
+      const scope = getScope(step);
+      const partsToCheck = scope === 'per_part' ? getPartsForStep(order.order_parts, step) : [undefined];
+
+      for (const part of partsToCheck) {
+        const inProgress = part === undefined
+          ? genericExecutions.has(`${order.id}_${step}`)
+          : partExecutions.has(`${order.id}_${step}_${part.id}`);
+
+        if (inProgress || await canStartStepForPart({ order, wf, step, orderPartId: part?.id }, orderExecutions)) {
+          isVisible = true;
+          break;
         }
       }
+      if (isVisible) break;
     }
 
-    const visibleOrders = [];
-
-    for (const order of orders) {
-      const wf = getWorkflowMap(order.product_type);
-      if (!wf) continue;
-
-      const allowedSteps = getRoleSteps(role, wf);
-      let isVisible = false;
-      const orderExecutions = executionsByOrder.get(order.id) || [];
-
-      for (const step of allowedSteps) {
-        const scope = getScope(step);
-        const partsToCheck = scope === 'per_part' ? getPartsForStep(order.order_parts, step) : [undefined];
-
-        for (const part of partsToCheck) {
-          const inProgress = part === undefined
-            ? genericExecutions.has(`${order.id}_${step}`)
-            : partExecutions.has(`${order.id}_${step}_${part.id}`);
-
-          if (inProgress || await canStartStepForPart({ order, wf, step, orderPartId: part?.id }, orderExecutions)) {
-            isVisible = true; 
-            break;
-          }
-        }
-        if (isVisible) break;
-      }
-
-      if (isVisible) {
-        visibleOrders.push({ 
-          ...order, 
-          state: await getOrderState(order, wf, orderExecutions) 
-        });
-      }
+    if (isVisible) {
+      visibleOrders.push({
+        ...order,
+        state: await getOrderState(order, wf, orderExecutions)
+      });
     }
+  }
 
-    return visibleOrders;
+  return visibleOrders;
 };
