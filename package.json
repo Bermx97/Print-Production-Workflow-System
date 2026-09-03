@@ -1,7 +1,7 @@
 {
   "name": "print-production-workflow-system",
   "version": "1.0.0",
-  "description": "Stateful workflow engine with event-based audit history backend for managing print production workflows with RBAC, audit logging, dependency validation, and concurrent step protection.",
+  "description": "Backend system for managing print production workflows with a stateful workflow engine, event-based audit history, RBAC, dependency validation, and concurrency protection.",
   "main": "dist/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -18,7 +18,7 @@
     "prisma",
     "rest-api",
     "workflow-engine",
-    "stateful workflow engine with event-based audit history",
+    "audit-log",
     "rbac",
     "jest"
   ],
