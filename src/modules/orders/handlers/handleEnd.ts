@@ -2,6 +2,9 @@ import { OrderStatusV2 } from '../../../types/orderStatus';
 import { assertRoleCanAccessStep } from '../domain/roleGuard';
 import { HttpError } from '../../../utils/errors';
 import { getPartsForStep, stepScope } from '../orders.workflow';
+import { employee_role } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+
 
 type WorkflowStep = keyof typeof stepScope;
 
@@ -9,7 +12,7 @@ const DONE_STATUS = 'done';
 
 const getStepFromRole = (
   wf: Record<string, any>,
-  role: any
+  role: employee_role
 ): OrderStatusV2 => {
   const allSteps = Object.keys(wf) as OrderStatusV2[];
 
@@ -34,7 +37,7 @@ const getStepFromRole = (
 };
 
 const assertDependenciesDone = async (ctx: {
-  tx: any;
+  tx: Prisma.TransactionClient;
   order: any;
   wf: Record<string, any>;
   activeStep: OrderStatusV2;
@@ -129,7 +132,7 @@ const assertDependenciesDone = async (ctx: {
 };
 
 export const handleEnd = async (ctx: {
-  tx: any;
+  tx: Prisma.TransactionClient;
   order: any;
   userId: string;
   role: any;

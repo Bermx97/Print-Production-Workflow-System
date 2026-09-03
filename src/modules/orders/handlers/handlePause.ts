@@ -3,11 +3,11 @@ import { OrderStatus } from '../../../types/orderStatus';
 import { stepScope } from '../orders.workflow';
 import { getStepFromRole, getWorkflow } from '../domain/workflowContext';
 import { employee_role } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
-type WorkflowStep = keyof typeof stepScope;
 
 export const handlePause = async (ctx: {
-  tx: any;
+  tx: Prisma.TransactionClient;
   order: any;
   userId: string;
   role: employee_role;

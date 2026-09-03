@@ -5,10 +5,11 @@ import { HttpError } from '../../../utils/errors';
 import { assertRoleCanAccessStep } from '../domain/roleGuard';
 import { READY_STATUSES } from '../domain/workflowContext';
 import { getPartsForStep, isPartApplicableToStep, stepScope, workflow } from '../orders.workflow';
+import type { Prisma } from '@prisma/client';
 import { employee_role } from '@prisma/client';
 
 export const handleStart = async (ctx: {
-  tx: any;
+  tx: Prisma.TransactionClient;
   order: any;
   userId: string;
   role: employee_role;

@@ -8,9 +8,11 @@ import { employee_role } from "@prisma/client";
 import { assertRoleCanAccessStep } from "../../domain/roleGuard";
 import { getOrderParts } from "../queries/orderParts.queries";
 import { getPartsForStep, isPartApplicableToStep, stepScope } from "../../orders.workflow";
+import type { Prisma } from '@prisma/client';
+
 
 export const validateStepCanStart = async (ctx: {
-  tx: any;
+  tx: Prisma.TransactionClient;
   order: any;
   role: employee_role;
   step: OrderStatusV2;
