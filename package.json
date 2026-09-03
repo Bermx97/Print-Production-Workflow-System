@@ -1,7 +1,8 @@
 {
   "name": "print-production-workflow-system",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "Event-driven backend for managing print production workflows with RBAC, audit logging, dependency validation, and concurrent step protection.",
+  "main": "dist/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -9,12 +10,26 @@
     "test": "cross-env NODE_ENV=test jest",
     "seed:orders": "tsx prisma/seed.ts"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "nodejs",
+    "typescript",
+    "express",
+    "postgresql",
+    "prisma",
+    "rest-api",
+    "workflow-engine",
+    "event-driven",
+    "rbac",
+    "jest"
+  ],
+  "author": "Łukasz",
   "license": "ISC",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bermx97/Print-Production-Workflow-System.git"
+  },
+  "homepage": "https://print-production-workflow-system.onrender.com/",
   "dependencies": {
-    "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^6.19.3",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
