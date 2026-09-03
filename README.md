@@ -247,7 +247,6 @@ Update `DATABASE_URL` in `.env.test`, then run:
 
 ```bash
 npm test
-```test
 ```
 
 ## API Endpoints
