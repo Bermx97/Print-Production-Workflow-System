@@ -36,7 +36,7 @@ To explore the application from the perspective of different system roles, you c
 
 ## Overview
 
-This repository contains the backend REST API for a Print Production Workflow System. It is designed to manage manufacturing and print production orders by modeling the process as a stateful, event-driven workflow engine. Orders transition through predefined steps governed by strict dependencies and role-based execution rules.
+This repository contains the backend REST API for a Print Production Workflow System. It is designed to manage manufacturing and print production orders by modeling the process as a stateful, stateful workflow engine with event-based audit historye. Orders transition through predefined steps governed by strict dependencies and role-based execution rules.
 
 The system uses an event-driven workflow that records every transition in an append-only audit log while storing the current state of each step in `step_execution` for efficient querying. There is no single global order status; each workflow step is tracked independently.
 
@@ -64,8 +64,8 @@ I designed this project based on my 10 years of professional experience in print
 -   Order filtering, detailed views, and search functionality.
 -   A simple frontend UI for creating orders and tracking their progress live.
 -   Comprehensive integration test suite using Jest and Supertest.
--   Real-time production analytics.
-
+-   Production analytics and step performance metrics.
+  
 ## Core Design
 
 ### Execution-Driven Architecture
