@@ -4,6 +4,12 @@ import { HttpError } from '../../../utils/errors';
 import { getPartsForStep, stepScope } from '../orders.workflow';
 import { employee_role } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
+import { product_type } from '@prisma/client';
+import { OrderStatus } from '../../../types/orderStatus';
+import type { order as Order } from '@prisma/client';
+import { WorkflowMap } from '../../../types/orderStatus';
+
+
 
 
 type WorkflowStep = keyof typeof stepScope;
@@ -11,7 +17,7 @@ type WorkflowStep = keyof typeof stepScope;
 const DONE_STATUS = 'done';
 
 const getStepFromRole = (
-  wf: Record<string, any>,
+  wf: Record<product_type, OrderStatus>,
   role: employee_role
 ): OrderStatusV2 => {
   const allSteps = Object.keys(wf) as OrderStatusV2[];
@@ -38,8 +44,8 @@ const getStepFromRole = (
 
 const assertDependenciesDone = async (ctx: {
   tx: Prisma.TransactionClient;
-  order: any;
-  wf: Record<string, any>;
+  order: Order;
+  wf: WorkflowMap;
   activeStep: OrderStatusV2;
   orderPartId: string;
 }) => {
@@ -87,7 +93,7 @@ const assertDependenciesDone = async (ctx: {
           order_id: order.id,
           step_type: dependencyStep,
           order_part_id: {
-            in: orderParts.map((part: any) => part.id)
+            in: orderParts.map((part) => part.id)
           },
           status: DONE_STATUS
         },
@@ -97,10 +103,10 @@ const assertDependenciesDone = async (ctx: {
       });
 
       const donePartIds = new Set(
-        doneExecutions.map((execution: any) => execution.order_part_id)
+        doneExecutions.map((execution) => execution.order_part_id)
       );
 
-      const allVariantsDone = orderParts.every((part: any) =>
+      const allVariantsDone = orderParts.every((part) =>
         donePartIds.has(part.id)
       );
 
@@ -133,9 +139,9 @@ const assertDependenciesDone = async (ctx: {
 
 export const handleEnd = async (ctx: {
   tx: Prisma.TransactionClient;
-  order: any;
+  order: Order;
   userId: string;
-  role: any;
+  role: employee_role;
   wf: Record<string, any>;
   doneQuantity: number;
   orderPartId: string;

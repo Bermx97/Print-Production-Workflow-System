@@ -4,6 +4,9 @@ import { HttpError } from '../../../utils/errors';
 import { employee_role } from '@prisma/client';
 import { assertRoleCanAccessStep } from './roleGuard';
 import { stepScope } from '../orders.workflow';
+import type { order as Order } from '@prisma/client';
+import { product_type } from '@prisma/client';
+
 
 
 export const READY_STATUSES = ['active', 'paused', 'done'] as const;
@@ -11,9 +14,9 @@ export const IN_PROGRESS_STATUSES = ['active', 'paused'] as const;
 export const BLOCK_START_STATUSES = ['active', 'paused', 'done'] as const;
 
 
-export const getScope = (step: string) => stepScope[step as WorkflowStep];
+export const getScope = (step: OrderStatusV2) => stepScope[step as WorkflowStep];
 
-export const getWorkflow = (order: any) => {
+export const getWorkflow = (order: Order) => {
   const productType = order.product_type as WorkflowProductType;
   const wf = workflow[productType as WorkflowProductType];
 
@@ -24,7 +27,7 @@ export const getWorkflow = (order: any) => {
   return wf;
 };
 
-export const getWorkflowMap = (productType: string): WorkflowMap | undefined => {
+export const getWorkflowMap = (productType: product_type): WorkflowMap | undefined => {
   return workflow[productType as WorkflowProductType];
 }; 
 
@@ -54,7 +57,7 @@ export const getStepFromRole = (
   return roleSteps[0];
 };
 
-export const getStepDependencies = (order: any, step: OrderStatusV2) => {
+export const getStepDependencies = (order: Order, step: OrderStatusV2) => {
   const wf = getWorkflow(order);
   return (wf[step as keyof typeof wf] ?? []) as WorkflowStep[];
 };

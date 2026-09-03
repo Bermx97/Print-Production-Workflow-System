@@ -1,16 +1,13 @@
 import { HttpError } from '../../../utils/errors';
-import { OrderStatus } from '../../../types/orderStatus';
 import { stepScope } from '../orders.workflow';
 import { getStepFromRole, getWorkflow } from '../domain/workflowContext';
-import { employee_role } from '@prisma/client';
-import type { Prisma } from '@prisma/client';
-
+import { employee_role, Prisma, order as Order } from '@prisma/client';
 
 type WorkflowStep = keyof typeof stepScope;
 
 export const handleResume = async (ctx: {
   tx: Prisma.TransactionClient;
-  order: any;
+  order: Order;
   userId: string;
   role: employee_role;
   orderPartId: string;

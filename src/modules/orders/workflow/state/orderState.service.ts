@@ -3,8 +3,9 @@ import prisma from "../../../../lib/prisma";
 import { BLOCK_START_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
 import { getPartsForStep } from "../../orders.workflow";
+import { OrderWithParts } from "../../../../types/order.types";
 
-export const getOrderState = async (order: any, wf: WorkflowMap, executionsForOrder?: any[]) => {
+export const getOrderState = async (order: OrderWithParts, wf: WorkflowMap, executionsForOrder?: any[]) => {
   const state: Record<string, string> = {};
 
   const executions = executionsForOrder || await prisma.step_execution.findMany({
@@ -16,7 +17,7 @@ export const getOrderState = async (order: any, wf: WorkflowMap, executionsForOr
     const scope = getScope(step);
 
     if (scope === 'per_part') {
-      const partIds = getPartsForStep(order.order_parts, step).map((part: any) => part.id);
+      const partIds = getPartsForStep(order.order_parts, step).map((part) => part.id);
 
       const stepExecutions = executions.filter((ex: any) => 
         ex.step_type === step &&

@@ -182,7 +182,7 @@ export const getOrderPartsV2 = async (req: Request, res: Response) => {
 
       const execution = executionMap.get(part.id);
 
-      if (execution && BLOCK_START_STATUSES.includes(execution.status as any)) {
+      if (execution && BLOCK_START_STATUSES.includes(execution.status)) {
         return {
           ...part,
           step,

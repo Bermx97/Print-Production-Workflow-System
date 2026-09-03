@@ -6,12 +6,14 @@ import { step_name } from "@prisma/client";
 import { BLOCK_START_STATUSES, READY_STATUSES } from "../../domain/workflowContext";
 import { getScope } from "../../domain/workflowContext";
 import type { Prisma } from '@prisma/client';
+import type { order as Order } from '@prisma/client';
+
 
 
 
 export const findCurrentExecution = async (ctx: {
   tx: Prisma.TransactionClient;
-  order: any;
+  order: Order;
   step: OrderStatusV2;
   orderPartId: string;
 }) => {

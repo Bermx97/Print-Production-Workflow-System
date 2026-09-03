@@ -7,10 +7,11 @@ import { READY_STATUSES } from '../domain/workflowContext';
 import { getPartsForStep, isPartApplicableToStep, stepScope, workflow } from '../orders.workflow';
 import type { Prisma } from '@prisma/client';
 import { employee_role } from '@prisma/client';
+import type { order as Order } from '@prisma/client';
 
 export const handleStart = async (ctx: {
   tx: Prisma.TransactionClient;
-  order: any;
+  order: Order;
   userId: string;
   role: employee_role;
   step: OrderStatusV2;
@@ -70,7 +71,7 @@ export const handleStart = async (ctx: {
           order_id: order.id,
           step_type: dependencyStep,
           order_part_id: {
-            in: orderParts.map((part: any) => part.id)
+            in: orderParts.map((part) => part.id)
           },
           status: {
             in: [...READY_STATUSES]
@@ -82,10 +83,10 @@ export const handleStart = async (ctx: {
       });
 
       const readyPartIds = new Set(
-        readyExecutions.map((execution: any) => execution.order_part_id)
+        readyExecutions.map((execution) => execution.order_part_id)
       );
 
-      const allVariantsReady = orderParts.every((part: any) =>
+      const allVariantsReady = orderParts.every((part) =>
         readyPartIds.has(part.id)
       );
 

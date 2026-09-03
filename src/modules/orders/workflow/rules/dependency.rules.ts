@@ -9,11 +9,14 @@ import { assertRoleCanAccessStep } from "../../domain/roleGuard";
 import { getOrderParts } from "../queries/orderParts.queries";
 import { getPartsForStep, isPartApplicableToStep, stepScope } from "../../orders.workflow";
 import type { Prisma } from '@prisma/client';
+import type { order as Order } from '@prisma/client';
+import { OrderWithParts } from "../../../../types/order.types";
+
 
 
 export const validateStepCanStart = async (ctx: {
   tx: Prisma.TransactionClient;
-  order: any;
+  order: Order;
   role: employee_role;
   step: OrderStatusV2;
   orderPartId: string;
@@ -107,7 +110,7 @@ export const validateStepCanStart = async (ctx: {
           order_id: order.id,
           step_type: dependencyStep,
           order_part_id: {
-            in: orderParts.map((part: any) => part.id)
+            in: orderParts.map((part) => part.id)
           },
           status: {
             in: [...READY_STATUSES]
@@ -119,10 +122,10 @@ export const validateStepCanStart = async (ctx: {
       });
 
       const readyPartIds = new Set(
-        readyExecutions.map((execution: any) => execution.order_part_id)
+        readyExecutions.map((execution) => execution.order_part_id)
       );
 
-      const allVariantsReady = orderParts.every((part: any) =>
+      const allVariantsReady = orderParts.every((part) =>
         readyPartIds.has(part.id)
       );
 
@@ -150,7 +153,7 @@ export const validateStepCanStart = async (ctx: {
             order_id: order.id,
             step_type: dependencyStep,
             order_part_id: {
-              in: orderParts.map((part: any) => part.id)
+              in: orderParts.map((part) => part.id)
             },
             status: {
               in: [...READY_STATUSES]
@@ -162,10 +165,10 @@ export const validateStepCanStart = async (ctx: {
         });
 
         const readyPartIds = new Set(
-          readyExecutions.map((execution: any) => execution.order_part_id)
+          readyExecutions.map((execution) => execution.order_part_id)
         );
 
-        const allVariantsReady = orderParts.every((part: any) =>
+        const allVariantsReady = orderParts.every((part) =>
           readyPartIds.has(part.id)
         );
 
@@ -201,13 +204,13 @@ export const validateStepCanStart = async (ctx: {
 
 
 export const allPartsReadyInDependency = async (
-  ctx: { order: any; dependencyStep: step_name; },
+  ctx: { order: OrderWithParts; dependencyStep: step_name; },
   executionsForOrder?: any[]
 ) => {
   const { order, dependencyStep } = ctx;
   const dependencyScope = getScope(dependencyStep);
   const partsForStep = getPartsForStep(order.order_parts, dependencyStep as OrderStatus);
-  const partIds = partsForStep.map((part: any) => part.id);
+  const partIds = partsForStep.map((part) => part.id);
 
   if (dependencyScope !== 'per_part') {
     return isStepStartedOrDone({
@@ -232,14 +235,14 @@ export const allPartsReadyInDependency = async (
 };
 
 export const canStartStepForPart = async (
-  ctx: { order: any; wf: WorkflowMap; step: step_name; orderPartId?: string | null; },
+  ctx: { order: OrderWithParts; wf: WorkflowMap; step: step_name; orderPartId?: string | null; },
   executionsForOrder?: any[]
 ) => {
   const { order, wf, step, orderPartId } = ctx;
   const scope = getScope(step);
 
   if (scope === 'per_part' && orderPartId) {
-    const orderPart = order.order_parts?.find((part: any) =>
+    const orderPart = order.order_parts?.find((part) =>
       String(part.id) === String(orderPartId)
     );
 
