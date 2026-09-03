@@ -492,5 +492,66 @@ describe('createStepEventV2', () => {
         )
     ).rejects.toThrow();
     });
+
+    it('should allow only one concurrent START for the same step', async () => {
+  const results = await Promise.allSettled([
+    createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    ),
+    createStepEventV2(
+      order.order_number,
+      printerId,
+      printerRole,
+      'START',
+      orderPartId
+    )
+  ]);
+
+  const fulfilledResults = results.filter(
+    result => result.status === 'fulfilled'
+  );
+
+  const rejectedResults = results.filter(
+    result => result.status === 'rejected'
+  );
+
+  expect(fulfilledResults).toHaveLength(1);
+  expect(rejectedResults).toHaveLength(1);
+
+  const rejectedResult = rejectedResults[0];
+
+  if (rejectedResult.status === 'rejected') {
+    expect(rejectedResult.reason).toBeInstanceOf(HttpError);
+    expect(rejectedResult.reason.status).toBe(409);
+    expect(rejectedResult.reason.message).toBe('Step already active');
+  }
+
+  const startLogs = await prisma.step_logs.findMany({
+    where: {
+      order_id: order.id,
+      order_part_id: orderPartId,
+      step_name: 'printing',
+      event_type: 'START'
+    }
+  });
+
+  expect(startLogs).toHaveLength(1);
+
+  const executions = await prisma.step_execution.findMany({
+    where: {
+      order_id: order.id,
+      order_part_id: orderPartId,
+      step_type: 'printing'
+    }
+  });
+
+  expect(executions).toHaveLength(1);
+  expect(executions[0].status).toBe('active');
+});
+
 });
 

@@ -113,11 +113,23 @@ export const createOrderService = async (data: CreateOrderData, partsData: Omit<
 
 export const createStepEventV2 = async (orderNumber: number, userId: string, role: employee_role, eventType: EventType, orderPartId: string, doneQuantity?: number) => {
   return prisma.$transaction(async (tx) => {
-    const order = await tx.order.findFirst({
-      where: {
-        order_number: orderNumber
-      }
-    });
+    
+    const [lockedOrder] = await tx.$queryRaw<Array<{ id: string }>>`
+    SELECT "id"
+    FROM "order"
+    WHERE "order_number" = ${orderNumber}
+    FOR UPDATE
+  `;
+
+  if (!lockedOrder) {
+    throw new HttpError('Order not found', 404);
+  }
+
+  const order = await tx.order.findUnique({
+    where: {
+      id: lockedOrder.id
+    }
+  });
 
     if (!order) {
       throw new HttpError('Order not found', 404);
