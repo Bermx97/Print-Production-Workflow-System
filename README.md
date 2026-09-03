@@ -159,7 +159,7 @@ The system uses the following enumerations to maintain data integrity across the
 | :--- | :--- |
 | **Step Name** | `printing`, `folding`, `sewing`, `case_making`, `folding_with_milling`, `hardcover_binding`, `binding`, `stitching` |
 | **Step Event** | `START`, `END`, `PAUSE`, `RESUME` |
-| **Execution Status** | `active`, `paused`, `done`, `cancelled` |
+| **Execution Status** | `active`, `paused`, `done` |
 
 #### Configuration & Variants
 | Enum | Values |
