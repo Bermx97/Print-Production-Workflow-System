@@ -195,9 +195,14 @@ The system uses the following enumerations to maintain data integrity across the
     JWT_SECRET="your-super-secret-jwt-key"
     ```
 
-4.  Apply database migrations:
+4.  Generate Prisma Client:
     ```bash
-    npx prisma migrate dev
+    npx prisma generate
+    ```
+
+5.  Apply the committed database migrations:
+    ```bash
+    npx prisma migrate deploy
     ```
 
 ### Running the Application
