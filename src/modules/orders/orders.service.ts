@@ -98,16 +98,24 @@ export const getOrderWithRelations = async (orderNumber: number) => {
   return order;
 };
 
-export const createOrderService = async (data: CreateOrderData, partsData: Omit<Prisma.order_partsCreateManyInput, 'order_id'>[]) => {
-  const order = await prisma.order.create({ data });
+export const createOrderService = async (
+  data: CreateOrderData,
+  partsData: Omit<Prisma.order_partsCreateManyInput, 'order_id'>[]
+) => {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.create({
+      data
+    });
 
-  await prisma.order_parts.createMany({
-    data: partsData.map(part => ({
-      ...part,
-      order_id: order.id
-    }))
+    await tx.order_parts.createMany({
+      data: partsData.map(part => ({
+        ...part,
+        order_id: order.id
+      }))
+    });
+
+    return order;
   });
-  return order
 };
 
 
