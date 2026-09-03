@@ -142,5 +142,4 @@ enum execution_status {
   active
   paused
   done
-  cancelled
 }
